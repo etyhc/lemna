@@ -1,0 +1,30 @@
+syntax = "proto3";
+package agent;
+
+service Client {
+  rpc Register(ClientRegMsg) returns (ClientRegMsg) {}
+  rpc Forward(stream ClientFwdMsg) returns (stream ClientFwdMsg) {}
+}
+
+service Server {
+  rpc Forward (stream ServerFwdMsg) returns (stream ServerFwdMsg) {}
+}
+
+message ClientRegMsg {
+  string token = 1;
+}
+
+message RawMsg {
+  int32 type =1;
+  bytes raw = 2;
+}
+
+message ClientFwdMsg {
+  int32 serverType = 1;
+  RawMsg msg = 2;
+}
+
+message ServerFwdMsg {
+  int32 clientID = 1;
+  RawMsg msg = 2;
+}

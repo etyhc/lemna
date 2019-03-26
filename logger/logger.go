@@ -45,7 +45,7 @@ type Pattern interface {
 	Roll() io.Writer
 }
 
-type samplePattern int
+type samplePattern struct{}
 
 func (out *samplePattern) Format(level Level, a ...interface{}) string {
 	return fmt.Sprint(LevelStr[level], ": ", fmt.Sprint(a...))
@@ -111,9 +111,7 @@ func Error(a ...interface{}) {
 }
 
 //默认logger，只输出控制台
-
-var sample samplePattern
-var logger = &Logger{&sample, INFO, "", nil}
+var logger = &Logger{&samplePattern{}, INFO, "", nil}
 
 func init() {
 	SetName(logger.name)
@@ -161,28 +159,27 @@ func (l *Logger) Errorf(format string, a ...interface{}) {
 	l.Output(ERROR, fmt.Sprintf(format, a...))
 }
 
-// New 新日志器
-// Debugf 输出调试日志
+// Debug 输出调试日志
 func (l *Logger) Debug(a ...interface{}) {
 	l.Output(DEBUG, a...)
 }
 
-// Infof 输出信息日志
+// Info 输出信息日志
 func (l *Logger) Info(a ...interface{}) {
 	l.Output(INFO, a...)
 }
 
-// Warnf 输出警告日志
+// Warn 输出警告日志
 func (l *Logger) Warn(a ...interface{}) {
 	l.Output(WARN, a...)
 }
 
-// Errorf 输出错误日志
+// Error 输出错误日志
 func (l *Logger) Error(a ...interface{}) {
 	l.Output(ERROR, a...)
 }
 
-// level 新日志等级
+// New 新日志等级
 // name 新日志名字
 func New(pattern Pattern, level Level, name string) *Logger {
 	return &Logger{pattern, level, name, log.New(pattern.Roll(), name, 0)}
