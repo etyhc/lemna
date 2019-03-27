@@ -3,6 +3,7 @@ package agent
 import (
 	"errors"
 	fmt "fmt"
+	"lemna/agent/rpc"
 	"log"
 	"net"
 	"strconv"
@@ -13,6 +14,7 @@ import (
 	"google.golang.org/grpc/metadata"
 )
 
+// AgentService ...
 type AgentService struct {
 	Port string
 }
@@ -21,7 +23,7 @@ var clientMap = make(map[int32]*client)
 var serverMap = make(map[int32]*Server)
 var tokenMap = map[string]int32{"token": 1}
 
-func (as *AgentService) Register(cont context.Context, msg *ClientRegMsg) (*ClientRegMsg, error) {
+func (as *AgentService) Register(cont context.Context, msg *rpc.ClientRegMsg) (*rpc.ClientRegMsg, error) {
 	if sessionid, ok := tokenMap[msg.Token]; ok {
 		if _, ok := clientMap[sessionid]; !ok {
 			clientMap[sessionid] = &client{id: sessionid, login: true}
@@ -32,7 +34,7 @@ func (as *AgentService) Register(cont context.Context, msg *ClientRegMsg) (*Clie
 	return nil, fmt.Errorf("invalid token %s", msg.Token)
 }
 
-func (as *AgentService) Forward(stream Client_ForwardServer) error {
+func (as *AgentService) Forward(stream rpc.Client_ForwardServer) error {
 
 	if md, ok := metadata.FromIncomingContext(stream.Context()); ok {
 		if session, ok := md["sessionid"]; ok {
@@ -55,7 +57,7 @@ func (as *AgentService) Start() {
 		log.Fatalf("failed to listen: %v", err)
 	}
 	s := grpc.NewServer()
-	RegisterClientServer(s, as)
+	rpc.RegisterClientServer(s, as)
 	log.Println("agent running")
 	s.Serve(lis)
 }

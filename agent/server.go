@@ -2,6 +2,7 @@ package agent
 
 import (
 	"io"
+	"lemna/agent/rpc"
 	"log"
 
 	context "golang.org/x/net/context"
@@ -11,13 +12,13 @@ import (
 type Server struct {
 	Typeid int32
 	Port   string
-	stream Server_ForwardClient
+	stream rpc.Server_ForwardClient
 }
 
 func (s *Server) init() error {
 	conn, err := grpc.Dial(s.Port, grpc.WithInsecure())
 	if err == nil {
-		sc := NewServerClient(conn)
+		sc := rpc.NewServerClient(conn)
 		s.stream, err = sc.Forward(context.Background())
 		if err == nil || err == io.EOF {
 			log.Println(s.Typeid, " is ready.")
@@ -29,13 +30,14 @@ func (s *Server) init() error {
 
 func (s *Server) run() {
 	for {
-		msg, err := s.stream.Recv()
+		sfmsg, err := s.stream.Recv()
 		if err != nil && err != io.EOF {
 			break
 		}
-		if client, ok := clientMap[msg.ClientID]; ok {
-			log.Println("s to c ", msg.ClientID)
-			client.stream.Send(&ClientFwdMsg{ServerType: s.Typeid, Msg: msg.Msg})
+		if client, ok := clientMap[sfmsg.Target]; ok {
+			log.Println("s to c ", sfmsg.Target)
+			sfmsg.Target = s.Typeid
+			client.stream.Send(sfmsg)
 		}
 	}
 }
