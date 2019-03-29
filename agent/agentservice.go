@@ -4,10 +4,8 @@ import (
 	"errors"
 	fmt "fmt"
 	"lemna/agent/rpc"
-	"log"
 	"net"
 	"strconv"
-	"time"
 
 	context "golang.org/x/net/context"
 	grpc "google.golang.org/grpc"
@@ -16,61 +14,52 @@ import (
 
 // AgentService ...
 type AgentService struct {
-	Port string
+	Port     string
+	Cm       ClientManager
+	Balancer Balancer
+	Token    Token
 }
 
-var clientMap = make(map[int32]*client)
-var serverMap = make(map[int32]*Server)
-var tokenMap = map[string]int32{"token": 1}
-
-func (as *AgentService) Register(cont context.Context, msg *rpc.ClientRegMsg) (*rpc.ClientRegMsg, error) {
-	if sessionid, ok := tokenMap[msg.Token]; ok {
-		if _, ok := clientMap[sessionid]; !ok {
-			clientMap[sessionid] = &client{id: sessionid, login: true}
+func (as *AgentService) Register(cont context.Context, msg *rpc.ClientRegMsg) (ret *rpc.ClientRegMsg, err error) {
+	ret = msg
+	var sessionid int32
+	//根据token分配一个sessionid
+	if sessionid, err = as.Token.GetSessionID(msg.Token); err == nil {
+		var c Client
+		//根据sessionid从client管理器得到或创建一个Client
+		if c, err = as.Cm.GetClient(sessionid); err == nil {
+			//将session返回给客户端，客户端每次RPC调用都应将此session放入head中
+			grpc.SetHeader(cont, metadata.Pairs("session", fmt.Sprint(c.SessionID())))
 		}
-		grpc.SetHeader(cont, metadata.Pairs("sessionid", clientMap[sessionid].session()))
-		return msg, nil
 	}
-	return nil, fmt.Errorf("invalid token %s", msg.Token)
+	return
 }
 
-func (as *AgentService) Forward(stream rpc.Client_ForwardServer) error {
+func (as *AgentService) Forward(stream rpc.Client_ForwardServer) (err error) {
 
 	if md, ok := metadata.FromIncomingContext(stream.Context()); ok {
-		if session, ok := md["sessionid"]; ok {
+		if session, ok := md["session"]; ok {
 			tmp, _ := strconv.Atoi(session[0])
 			sessionid := int32(tmp)
-			if client, ok := clientMap[sessionid]; ok {
-				client.stream = stream
-				err := client.run()
-				delete(clientMap, sessionid)
-				return err
+			var c Client
+			if c, err = as.Cm.GetClient(sessionid); err == nil {
+				c.SetStream(stream)
+				err = c.Run()
+				as.Cm.DelClient(c.SessionID())
 			}
+			return
 		}
 	}
-	return errors.New("invalid client")
+	err = errors.New("invalid client,no session")
+	return
 }
 
-func (as *AgentService) Start() {
+func (as *AgentService) Start() error {
 	lis, err := net.Listen("tcp", as.Port)
-	if err != nil {
-		log.Fatalf("failed to listen: %v", err)
+	if err == nil {
+		s := grpc.NewServer()
+		rpc.RegisterClientServer(s, as)
+		err = s.Serve(lis)
 	}
-	s := grpc.NewServer()
-	rpc.RegisterClientServer(s, as)
-	log.Println("agent running")
-	s.Serve(lis)
-}
-
-func (as *AgentService) RegisterServer(s *Server) {
-	go func() {
-		for {
-			if s.init() == nil {
-				serverMap[s.Typeid] = s
-				s.run()
-				delete(serverMap, s.Typeid)
-			}
-			time.Sleep(time.Second)
-		}
-	}()
+	return err
 }

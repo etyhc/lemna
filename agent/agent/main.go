@@ -2,15 +2,25 @@ package main
 
 import (
 	"lemna/agent"
+	"lemna/logger"
 	"time"
 )
 
+var cm clientManager
+var rb balancer
+var t token
+
 func main() {
-	as := agent.AgentService{Port: ":9999"}
-	as.RegisterServer(&agent.Server{Typeid: 1, Port: ":10001"})
-	as.RegisterServer(&agent.Server{Typeid: 2, Port: ":10000"})
-	as.Start()
-	for {
-		time.Sleep(time.Second)
+	rb.start()
+	cm.clients = make(map[int32]agent.Client)
+	t.data = tokenMap
+	as := agent.AgentService{Port: ":9999", Balancer: &rb, Cm: &cm, Token: &t}
+	if err := as.Start(); err == nil {
+		logger.Info("agent is  Running")
+		for {
+			time.Sleep(time.Second)
+		}
+	} else {
+		logger.Error(err)
 	}
 }

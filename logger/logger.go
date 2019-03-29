@@ -22,7 +22,7 @@ const (
 )
 
 // LevelStr 默认日志等级字串，表示此行日志等级
-var LevelStr = []string{"ERR", "WAR", "INF", "DEB"}
+var LevelStr = []string{"", "ERR", "WAR", "INF", "DEB"}
 
 // Logger 日志器
 type Logger struct {
