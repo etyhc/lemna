@@ -3,7 +3,7 @@ package agent
 import (
 	"errors"
 	fmt "fmt"
-	"lemna/agent/rpc"
+	"lemna/rpc"
 	"net"
 	"strconv"
 
@@ -45,7 +45,7 @@ func (as *AgentService) Forward(stream rpc.Client_ForwardServer) (err error) {
 			var c Client
 			if c, err = as.Cm.GetClient(sessionid); err == nil {
 				c.SetStream(stream)
-				err = as.RunClient(c)
+				err = as.runClient(c)
 				as.Cm.DelClient(sessionid)
 			}
 			return
@@ -55,8 +55,8 @@ func (as *AgentService) Forward(stream rpc.Client_ForwardServer) (err error) {
 	return
 }
 
-// RunClient 接收客户端消息并转发给均衡器提供的服务器
-func (as *AgentService) RunClient(c Client) (err error) {
+// runClient 接收客户端消息并转发给均衡器提供的服务器
+func (as *AgentService) runClient(c Client) (err error) {
 	var cfmsg *rpc.ForwardMsg
 	for {
 		cfmsg, err = c.Stream().Recv()
@@ -94,7 +94,7 @@ func (as *AgentService) RunServer(s Server) (err error) {
 	}
 }
 
-// Start 启动代理grpc服务
+// Start 启动代理服务
 func (as *AgentService) Start() error {
 	lis, err := net.Listen("tcp", as.Port)
 	if err == nil {

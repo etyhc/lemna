@@ -2,8 +2,8 @@ package simple
 
 import (
 	"io"
-	"lemna/agent/rpc"
 	"lemna/logger"
+	"lemna/rpc"
 
 	context "golang.org/x/net/context"
 	grpc "google.golang.org/grpc"
