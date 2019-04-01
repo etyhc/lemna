@@ -1,4 +1,4 @@
-package main
+package simple
 
 import (
 	"io"
@@ -9,17 +9,21 @@ import (
 	grpc "google.golang.org/grpc"
 )
 
-func (s *server) Stream() rpc.Server_ForwardClient {
+func (s *SimpleServer) Stream() rpc.Server_ForwardClient {
 	return s.stream
 }
 
-type server struct {
+func (s *SimpleServer) TypeID() int32 {
+	return s.Typeid
+}
+
+type SimpleServer struct {
 	Typeid int32
 	Port   string
 	stream rpc.Server_ForwardClient
 }
 
-func (s *server) init() error {
+func (s *SimpleServer) init() error {
 	conn, err := grpc.Dial(s.Port, grpc.WithInsecure())
 	if err == nil {
 		sc := rpc.NewServerClient(conn)
@@ -30,18 +34,4 @@ func (s *server) init() error {
 		}
 	}
 	return err
-}
-
-func (s *server) run() {
-	for {
-		sfmsg, err := s.stream.Recv()
-		if err != nil && err != io.EOF {
-			break
-		}
-		if client, err := cm.GetClient(sfmsg.Target); err == nil {
-			logger.Info("s to c ", sfmsg.Target)
-			sfmsg.Target = s.Typeid
-			client.Stream().Send(sfmsg)
-		}
-	}
 }

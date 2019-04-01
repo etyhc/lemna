@@ -10,10 +10,10 @@ import (
 )
 
 /*MsgHandler 是个消息回调函数，需要实现，并注册
-  id 消息来源
+  target 消息来源
   msg 消息本体
   stream grpc流，用于回复*/
-type MsgHandler func(id int32, msg interface{}, stream interface{})
+type MsgHandler func(target int32, msg interface{}, stream interface{})
 
 type msgInfo struct {
 	elem    reflect.Type
@@ -23,7 +23,6 @@ type msgInfo struct {
 var msgMap = make(map[int32]msgInfo)
 
 /*MsgReg 消息注册
-  typeid 消息类型唯一ID
   msg 消息定义
   handler 消息处理函数*/
 func MsgReg(msg interface{}, handler MsgHandler) {
@@ -40,7 +39,6 @@ func MsgReg(msg interface{}, handler MsgHandler) {
 
 /*ForwardMsgWrap 将消息封装为转发消息
   target 转发目标
-  msgid 消息类型唯一id
   msg 被编码的消息*/
 func ForwardMsgWrap(target int32, msg proto.Message) (*rpc.ForwardMsg, error) {
 	buf, err := proto.Marshal(msg)
@@ -50,9 +48,7 @@ func ForwardMsgWrap(target int32, msg proto.Message) (*rpc.ForwardMsg, error) {
 }
 
 /*ForwardMsgHandle 转发消息处理函数
-  id 消息来源
-  typeid 消息类型唯一ID
-  raw 未解码消息
+  fmsg 转发消息
   stream 消息流*/
 func ForwardMsgHandle(fmsg *rpc.ForwardMsg, stream interface{}) error {
 	if info, ok := msgMap[fmsg.Msg.Type]; ok {
