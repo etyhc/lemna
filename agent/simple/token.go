@@ -19,6 +19,8 @@ func (t *SimpleToken) GetSessionID(token string) (id int32, err error) {
 	return
 }
 
-func (t *SimpleToken) Init() {
+func NewSimpleToken() (t *SimpleToken) {
+	t = &SimpleToken{}
 	t.data = tokenMap
+	return
 }

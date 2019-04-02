@@ -12,16 +12,16 @@ import (
 	"google.golang.org/grpc/metadata"
 )
 
-// AgentService 代理服务
-type AgentService struct {
-	Port     string
-	Cm       ClientManager
-	Balancer Balancer
-	Token    Token
+// Service 代理服务
+type Service struct {
+	Port     string        //代理地址
+	Cm       ClientManager //客户端管理器
+	Balancer Balancer      //均衡器
+	Token    Token         //Token
 }
 
 // Register rpc.ClientServer.Register的实现,根据token分配唯一sessionid，并将此ID通过消息头返回给客户端
-func (as *AgentService) Register(cont context.Context, msg *rpc.ClientRegMsg) (ret *rpc.ClientRegMsg, err error) {
+func (as *Service) Register(cont context.Context, msg *rpc.ClientRegMsg) (ret *rpc.ClientRegMsg, err error) {
 	ret = msg
 	var sessionid int32
 	//根据token分配一个sessionid
@@ -36,7 +36,7 @@ func (as *AgentService) Register(cont context.Context, msg *rpc.ClientRegMsg) (r
 }
 
 // Forward rpc.ClientServer.Forward的实现,会验证消息头的session数据是否有效
-func (as *AgentService) Forward(stream rpc.Client_ForwardServer) (err error) {
+func (as *Service) Forward(stream rpc.Client_ForwardServer) (err error) {
 
 	if md, ok := metadata.FromIncomingContext(stream.Context()); ok {
 		if session, ok := md["session"]; ok {
@@ -56,7 +56,7 @@ func (as *AgentService) Forward(stream rpc.Client_ForwardServer) (err error) {
 }
 
 // runClient 接收客户端消息并转发给均衡器提供的服务器
-func (as *AgentService) runClient(c Client) (err error) {
+func (as *Service) runClient(c Client) (err error) {
 	var cfmsg *rpc.ForwardMsg
 	for {
 		cfmsg, err = c.Stream().Recv()
@@ -76,7 +76,7 @@ func (as *AgentService) runClient(c Client) (err error) {
 }
 
 // RunServer 接收服务器消息并转发给相应的客户端
-func (as *AgentService) RunServer(s Server) (err error) {
+func (as *Service) RunServer(s Server) (err error) {
 	var sfmsg *rpc.ForwardMsg
 	for {
 		sfmsg, err = s.Stream().Recv()
@@ -95,7 +95,7 @@ func (as *AgentService) RunServer(s Server) (err error) {
 }
 
 // Start 启动代理服务
-func (as *AgentService) Start() error {
+func (as *Service) Start() error {
 	lis, err := net.Listen("tcp", as.Port)
 	if err == nil {
 		s := grpc.NewServer()

@@ -10,9 +10,9 @@ import (
 
 // ServerService rpc服务器端封装
 type ServerService struct {
-	Addr      string //服务器地址
-	Typeid    int32  //服务器类型
-	Msgcenter *MsgCenter
+	Addr      string     //服务器地址
+	Typeid    int32      //服务器类型
+	Msgcenter *MsgCenter //消息中心
 }
 
 // Forward rpc.Forward调用实现,解析转发来的消息

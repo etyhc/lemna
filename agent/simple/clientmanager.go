@@ -11,13 +11,15 @@ type SimpleClientManager struct {
 	rw      sync.RWMutex
 }
 
-func (cm *SimpleClientManager) Init() {
+func NewSimpleClientManager() (cm *SimpleClientManager) {
+	cm = &SimpleClientManager{}
 	cm.clients = make(map[int32]agent.Client)
+	return
 }
 
 func (cm *SimpleClientManager) NewClient(sessionid int32) (c agent.Client, err error) {
 	var ok bool
-	cm.rw.RLock()
+	cm.rw.Lock()
 	c, ok = cm.clients[sessionid]
 	if !ok {
 		c = &SimpleClient{sessionid: sessionid}
