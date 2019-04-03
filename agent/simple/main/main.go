@@ -19,9 +19,8 @@ func init() {
 	rb.Start(as)
 }
 func main() {
-	if err := as.Start(); err == nil {
-		logger.Info("agent is  Running")
-	} else {
+	logger.SetLevel(logger.DEBUG)
+	if err := as.Run(); err != nil {
 		logger.Error(err)
 	}
 }

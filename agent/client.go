@@ -9,6 +9,7 @@ type Client interface {
 	Stream() rpc.Client_ForwardServer
 	SetStream(rpc.Client_ForwardServer)
 	SessionID() int32
+	Error(interface{}) error
 }
 
 // ClientManager 用户管理器接口

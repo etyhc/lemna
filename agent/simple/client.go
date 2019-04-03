@@ -25,3 +25,7 @@ func (c *SimpleClient) session() string {
 func (c *SimpleClient) SetStream(stream rpc.Client_ForwardServer) {
 	c.stream = stream
 }
+
+func (c *SimpleClient) Error(err interface{}) error {
+	return fmt.Errorf("<sessionid=%d>%s", c.sessionid, err)
+}

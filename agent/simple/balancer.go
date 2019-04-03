@@ -2,6 +2,7 @@ package simple
 
 import (
 	"lemna/agent"
+	"lemna/logger"
 	"lemna/rpc"
 	"time"
 )
@@ -21,7 +22,9 @@ func (sb *SimpleBalancer) registerServer(cs *rpc.ClientService) {
 		for {
 			if cs.Init() == nil {
 				sb.servers[cs.Typeid] = cs
-				sb.as.RunServer(cs)
+				logger.Infof("%d is running", cs.Typeid)
+				err := sb.as.RunServer(cs)
+				logger.Error(err)
 				delete(sb.servers, cs.Typeid)
 			}
 			time.Sleep(time.Second)

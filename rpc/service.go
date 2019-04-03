@@ -1,7 +1,7 @@
 package rpc
 
 import (
-	"lemna/logger"
+	fmt "fmt"
 	"net"
 
 	context "golang.org/x/net/context"
@@ -42,9 +42,10 @@ func (ss *ServerService) Run() error {
 
 // ClientService rpc客户端服务
 type ClientService struct {
-	Addr   string //服务器地址
-	Typeid int32  //服务器类型
-	stream Server_ForwardClient
+	Addr      string     //服务器地址
+	Typeid    int32      //服务器类型
+	Msgcenter *MsgCenter //消息中心
+	stream    Server_ForwardClient
 }
 
 // Stream 服务器流
@@ -57,15 +58,30 @@ func (cs *ClientService) TypeID() int32 {
 	return cs.Typeid
 }
 
+func (cs *ClientService) Error(err interface{}) error {
+	return fmt.Errorf("<typeid=%d>%s", cs.Typeid, err)
+}
+
 // Init 初始化
 func (cs *ClientService) Init() error {
 	conn, err := grpc.Dial(cs.Addr, grpc.WithInsecure())
 	if err == nil {
 		sc := NewServerClient(conn)
 		cs.stream, err = sc.Forward(context.Background())
-		if err == nil {
-			logger.Info(cs.Typeid, " is ready.")
-		}
 	}
 	return err
+}
+
+// Run 运行rpc客户端服务，解析消息
+func (cs *ClientService) Run() (err error) {
+	var in *ForwardMsg
+	for {
+		in, err = cs.stream.Recv()
+		if err == nil {
+			err = cs.Msgcenter.Handle(in, cs.stream)
+		}
+		if err != nil {
+			return
+		}
+	}
 }

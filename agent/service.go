@@ -1,8 +1,8 @@
 package agent
 
 import (
-	"errors"
 	fmt "fmt"
+	"lemna/logger"
 	"lemna/rpc"
 	"net"
 	"strconv"
@@ -30,6 +30,7 @@ func (as *Service) Register(cont context.Context, msg *rpc.ClientRegMsg) (ret *r
 		if _, err = as.Cm.NewClient(sessionid); err == nil {
 			//将session返回给客户端，客户端每次RPC调用都应将此session放入head中
 			grpc.SetHeader(cont, metadata.Pairs("session", fmt.Sprint(sessionid)))
+			logger.Debug(sessionid, "Register")
 		}
 	}
 	return
@@ -40,6 +41,7 @@ func (as *Service) Forward(stream rpc.Client_ForwardServer) (err error) {
 
 	if md, ok := metadata.FromIncomingContext(stream.Context()); ok {
 		if session, ok := md["session"]; ok {
+			logger.Debug(session)
 			tmp, _ := strconv.Atoi(session[0])
 			sessionid := int32(tmp)
 			var c Client
@@ -48,10 +50,12 @@ func (as *Service) Forward(stream rpc.Client_ForwardServer) (err error) {
 				err = as.runClient(c)
 				as.Cm.DelClient(sessionid)
 			}
-			return
+		} else {
+			err = fmt.Errorf("invalid client,no session")
 		}
+	} else {
+		err = fmt.Errorf("invalid rpc,no metadata")
 	}
-	err = errors.New("invalid client,no session")
 	return
 }
 
@@ -65,9 +69,14 @@ func (as *Service) runClient(c Client) (err error) {
 			if server, ok := as.Balancer.GetServer(cfmsg.Target, c.SessionID()); ok {
 				cfmsg.Target = c.SessionID()
 				err = server.Stream().Send(cfmsg)
+				if err != nil {
+					err = server.Error(err)
+				}
 			} else {
-				err = fmt.Errorf("not find server. target=%d", cfmsg.Target)
+				err = fmt.Errorf("<target=%d> not find server", cfmsg.Target)
 			}
+		} else {
+			err = c.Error(err)
 		}
 		if err != nil {
 			return
@@ -83,10 +92,13 @@ func (as *Service) RunServer(s Server) (err error) {
 		if err == nil {
 			if client, err := as.Cm.GetClient(sfmsg.Target); err == nil {
 				sfmsg.Target = s.TypeID()
-				client.Stream().Send(sfmsg)
+				err = client.Stream().Send(sfmsg)
+				if err != nil {
+					err = client.Error(err.Error())
+				}
 			}
 		} else {
-			err = fmt.Errorf("not find client. session=%d", sfmsg.Target)
+			err = s.Error(err)
 		}
 		if err != nil {
 			return
@@ -94,8 +106,8 @@ func (as *Service) RunServer(s Server) (err error) {
 	}
 }
 
-// Start 启动代理服务
-func (as *Service) Start() error {
+// Run 运行代理服务
+func (as *Service) Run() error {
 	lis, err := net.Listen("tcp", as.Port)
 	if err == nil {
 		s := grpc.NewServer()

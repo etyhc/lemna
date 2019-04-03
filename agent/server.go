@@ -8,6 +8,7 @@ import (
 type Server interface {
 	Stream() rpc.Server_ForwardClient
 	TypeID() int32
+	Error(interface{}) error
 }
 
 // Balancer 服务负载均衡器
