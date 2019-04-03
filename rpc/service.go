@@ -16,15 +16,14 @@ type ServerService struct {
 }
 
 // Forward rpc.Forward调用实现,解析转发来的消息
-func (ss *ServerService) Forward(stream Server_ForwardServer) (err error) {
-	var in *ForwardMsg
+func (ss *ServerService) Forward(stream Server_ForwardServer) error {
 	for {
-		in, err = stream.Recv()
+		in, err := stream.Recv()
 		if err == nil {
 			err = ss.Msgcenter.Handle(in, stream)
 		}
 		if err != nil {
-			return
+			return err
 		}
 	}
 }

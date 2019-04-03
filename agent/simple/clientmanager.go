@@ -17,26 +17,25 @@ func NewSimpleClientManager() (cm *SimpleClientManager) {
 	return
 }
 
-func (cm *SimpleClientManager) NewClient(sessionid int32) (c agent.Client, err error) {
-	var ok bool
+func (cm *SimpleClientManager) NewClient(sessionid int32) (agent.Client, error) {
 	cm.rw.Lock()
-	c, ok = cm.clients[sessionid]
+	c, ok := cm.clients[sessionid]
 	if !ok {
 		c = &SimpleClient{sessionid: sessionid}
 		cm.clients[sessionid] = c
 	}
 	cm.rw.Unlock()
-	return
+	return c, nil
 }
 
-func (cm *SimpleClientManager) GetClient(sessionid int32) (c agent.Client, err error) {
-	var ok bool
+func (cm *SimpleClientManager) GetClient(sessionid int32) (agent.Client, error) {
 	cm.rw.RLock()
-	if c, ok = cm.clients[sessionid]; !ok {
-		err = fmt.Errorf("not find client sessionid=%d", sessionid)
-	}
+	c, ok := cm.clients[sessionid]
 	cm.rw.RUnlock()
-	return
+	if ok {
+		return c, nil
+	}
+	return c, fmt.Errorf("not find client sessionid=%d", sessionid)
 }
 
 func (cm *SimpleClientManager) DelClient(sessionid int32) {

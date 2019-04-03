@@ -49,24 +49,30 @@ func (mi *MsgCenter) Reg(msg interface{}, handler MsgHandler) {
   target 转发目标
   msg 被编码的消息*/
 func (mi *MsgCenter) Wrap(target int32, msg proto.Message) (*ForwardMsg, error) {
-	if hash, ok := mi.hash[reflect.TypeOf(msg.(proto.Message)).Elem().Name()]; ok {
-		buf, err := proto.Marshal(msg)
-		return &ForwardMsg{Target: target, Msg: &RawMsg{Type: hash, Raw: buf}}, err
+	hash, ok := mi.hash[reflect.TypeOf(msg.(proto.Message)).Elem().Name()]
+	if !ok {
+		return nil, fmt.Errorf("%s don't register", reflect.TypeOf(msg.(proto.Message)).Elem().Name())
 	}
-	return nil, fmt.Errorf("%s don't register", reflect.TypeOf(msg.(proto.Message)).Elem().Name())
+	buf, err := proto.Marshal(msg)
+	if err != nil {
+		return nil, err
+	}
+	return &ForwardMsg{Target: target, Msg: &RawMsg{Type: hash, Raw: buf}}, nil
 }
 
 /*Handle 转发消息处理函数
   fmsg 转发消息
   stream 消息流*/
 func (mi *MsgCenter) Handle(fmsg *ForwardMsg, stream interface{}) error {
-	if info, ok := mi.info[fmsg.Msg.Type]; ok {
-		msg := reflect.New(info.elem).Interface()
-		err := proto.Unmarshal(fmsg.Msg.Raw, msg.(proto.Message))
-		if err == nil {
-			info.handler(fmsg.Target, msg, stream)
-		}
+	info, ok := mi.info[fmsg.Msg.Type]
+	if !ok {
+		return fmt.Errorf("invalid message type %d", fmsg.Msg.Type)
+	}
+	msg := reflect.New(info.elem).Interface()
+	err := proto.Unmarshal(fmsg.Msg.Raw, msg.(proto.Message))
+	if err != nil {
 		return err
 	}
-	return fmt.Errorf("invalid message type %d", fmsg.Msg.Type)
+	info.handler(fmsg.Target, msg, stream)
+	return nil
 }

@@ -10,13 +10,12 @@ var tokenMap = map[string]int32{
 	"token1": 1,
 	"token2": 2}
 
-func (t *SimpleToken) GetSessionID(token string) (id int32, err error) {
-	var ok bool
-	id, ok = t.data[token]
-	if !ok {
-		err = fmt.Errorf("invaild SimpleToken %s", token)
+func (t *SimpleToken) GetSessionID(token string) (int32, error) {
+	id, ok := t.data[token]
+	if ok {
+		return id, nil
 	}
-	return
+	return id, fmt.Errorf("invaild SimpleToken %s", token)
 }
 
 func NewSimpleToken() (t *SimpleToken) {
