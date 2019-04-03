@@ -21,9 +21,17 @@ type Service struct {
 }
 
 // Register rpc.ClientServer.Register的实现,根据token分配唯一sessionid，并将此ID通过消息头返回给客户端
-func (as *Service) Register(cont context.Context, msg *rpc.ClientRegMsg) (*rpc.ClientRegMsg, error) {
-	//根据token分配一个sessionid
-	sessionid, err := as.Token.GetSessionID(msg.Token)
+func (as *Service) Register(ctx context.Context, msg *rpc.ClientRegMsg) (*rpc.ClientRegMsg, error) {
+	md, ok := metadata.FromIncomingContext(ctx)
+	if !ok {
+		return nil, fmt.Errorf("invalid rpc,no metadata")
+	}
+	token, ok := md["token"]
+	if !ok {
+		return nil, fmt.Errorf("invalid client,no token")
+	}
+	//通过验证从ctx中获得sessionid
+	sessionid, err := as.Token.GetSessionID(token[0])
 	if err != nil {
 		return nil, err
 	}
@@ -33,8 +41,8 @@ func (as *Service) Register(cont context.Context, msg *rpc.ClientRegMsg) (*rpc.C
 		return nil, err
 	}
 	//将session返回给客户端，客户端每次RPC调用都应将此session放入head中
-	grpc.SetHeader(cont, metadata.Pairs("session", fmt.Sprint(sessionid)))
-	logger.Debug(sessionid, "Register")
+	grpc.SetHeader(ctx, metadata.Pairs("session", fmt.Sprint(sessionid)))
+	logger.Debug(sessionid, " Register")
 	return msg, nil
 }
 
