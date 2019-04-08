@@ -120,5 +120,6 @@ func (as *Service) Run() error {
 	}
 	s := grpc.NewServer()
 	rpc.RegisterClientServer(s, as)
+	as.Balancer.Start(as)
 	return s.Serve(lis)
 }

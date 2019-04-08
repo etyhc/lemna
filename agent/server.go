@@ -15,4 +15,5 @@ type Server interface {
 //          均衡器应在Server就绪时调用AgentService.RunServer让Server开始转发工作
 type Balancer interface {
 	GetServer(target int32, client Client) (Server, bool)
+	Start(*Service)
 }

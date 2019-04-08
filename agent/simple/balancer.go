@@ -10,19 +10,40 @@ import (
 	"reflect"
 )
 
+// SimpleBalancer 简单的无状态均衡器，轮询服务器提供服务
 type SimpleBalancer struct {
 	servers map[int32]map[string]*rpc.ClientService
 	as      *agent.Service
+	rand    *rand.Rand
 }
 
+var last = 0
+
+//轮询模式选择,TODO有bug
+func (sb *SimpleBalancer) algorithm(all int) int {
+	if all == 0 {
+		return 0
+	}
+	last = (last + 1) % all
+	return last
+}
+
+// GetServer 根据算法得到类型为target的服务器,c无视了
 func (sb *SimpleBalancer) GetServer(target int32, c agent.Client) (agent.Server, bool) {
-	r := rand.New(rand.NewSource(99))
 	ss, ok := sb.servers[target]
 	if ok && len(ss) > 0 {
 		keys := reflect.ValueOf(ss).MapKeys()
-		return ss[keys[r.Intn(len(ss))].String()], true
+		return ss[keys[sb.algorithm(len(ss))].String()], true
 	}
 	return nil, false
+}
+
+func (sb *SimpleBalancer) hasServer(typeid int32, addr string) bool {
+	if servers, ok := sb.servers[typeid]; ok {
+		_, ok := servers[addr]
+		return ok
+	}
+	return false
 }
 
 func (sb *SimpleBalancer) registerServer(cs *rpc.ClientService) {
@@ -43,10 +64,12 @@ func (sb *SimpleBalancer) registerServer(cs *rpc.ClientService) {
 
 func NewSimpleBalancer() (sb *SimpleBalancer) {
 	sb = &SimpleBalancer{}
+	sb.rand = rand.New(rand.NewSource(99))
 	sb.servers = make(map[int32]map[string]*rpc.ClientService)
 	return
 }
 
+//从配置频道服务器得到服务器信息
 func (sb *SimpleBalancer) subscribe() error {
 	finder := configrpc.ChannelClient{Addr: configrpc.ConfigServerAddr}
 	ch, err := finder.Subscribe("server", &server.Config{})
@@ -60,8 +83,10 @@ func (sb *SimpleBalancer) subscribe() error {
 				logger.Debug("subscribe closed")
 				return
 			}
-			logger.Info("register ", info)
-			sb.registerServer(&rpc.ClientService{Typeid: info.Type, Addr: info.Addr})
+			if !sb.hasServer(info.Type, info.Addr) {
+				logger.Info("register ", info)
+				sb.registerServer(&rpc.ClientService{Typeid: info.Type, Addr: info.Addr})
+			}
 		}
 	}()
 	return nil
