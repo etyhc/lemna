@@ -8,7 +8,7 @@ import (
 	"google.golang.org/grpc"
 )
 
-// ServerService rpc服务器端封装
+// ServerService rpc服务器端封装，用于服务器开发
 type ServerService struct {
 	Addr      string     //服务器地址
 	Typeid    int32      //服务器类型
@@ -39,7 +39,7 @@ func (ss *ServerService) Run() error {
 	return err
 }
 
-// ClientService rpc客户端服务
+// ClientService rpc客户端服务封装，用于客户端开发
 type ClientService struct {
 	Addr      string     //服务器地址
 	Typeid    int32      //服务器类型
@@ -58,7 +58,7 @@ func (cs *ClientService) TypeID() int32 {
 }
 
 func (cs *ClientService) Error(err interface{}) error {
-	return fmt.Errorf("<typeid=%d>%s", cs.Typeid, err)
+	return fmt.Errorf("<%s> %s", cs.Addr, err)
 }
 
 // Init 初始化

@@ -111,7 +111,7 @@ func Error(a ...interface{}) {
 }
 
 //默认logger，只输出控制台
-var logger = &Logger{&samplePattern{}, INFO, "", nil}
+var logger = &Logger{&samplePattern{}, DEBUG, "", nil}
 
 func init() {
 	SetName(logger.name)

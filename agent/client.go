@@ -1,8 +1,6 @@
 package agent
 
-import (
-	"lemna/rpc"
-)
+import "lemna/agent/rpc"
 
 // Client 用户流接口,agent会将服务器消息通过Stream().Send()转发给此用户
 type Client interface {

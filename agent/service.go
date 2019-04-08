@@ -2,8 +2,8 @@ package agent
 
 import (
 	fmt "fmt"
+	"lemna/agent/rpc"
 	"lemna/logger"
-	"lemna/rpc"
 	"net"
 	"strconv"
 
@@ -77,7 +77,7 @@ func (as *Service) runClient(c Client) error {
 			return c.Error(err)
 		}
 		//转发指令
-		server, ok := as.Balancer.GetServer(cfmsg.Target, c.SessionID())
+		server, ok := as.Balancer.GetServer(cfmsg.Target, c)
 		if !ok {
 			return fmt.Errorf("<target=%d> not find server", cfmsg.Target)
 		}
@@ -99,12 +99,15 @@ func (as *Service) RunServer(s Server) error {
 		}
 		client, err := as.Cm.GetClient(sfmsg.Target)
 		if err != nil {
-			return err
+			logger.Error(err)
+			continue //未找到用户服务器继续服务
 		}
 		sfmsg.Target = s.TypeID()
 		err = client.Stream().Send(sfmsg)
 		if err != nil {
-			return client.Error(err)
+			//用户失效，移除用户
+			logger.Error(client.Error(err))
+			as.Cm.DelClient(client.SessionID())
 		}
 	}
 }

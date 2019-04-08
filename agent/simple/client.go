@@ -2,7 +2,7 @@ package simple
 
 import (
 	fmt "fmt"
-	"lemna/rpc"
+	"lemna/agent/rpc"
 )
 
 type SimpleClient struct {

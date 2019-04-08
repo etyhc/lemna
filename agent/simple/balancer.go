@@ -2,44 +2,72 @@ package simple
 
 import (
 	"lemna/agent"
+	"lemna/agent/rpc"
+	configrpc "lemna/config/rpc"
+	"lemna/config/rpc/server"
 	"lemna/logger"
-	"lemna/rpc"
-	"time"
+	"math/rand"
+	"reflect"
 )
 
 type SimpleBalancer struct {
-	servers map[int32]*rpc.ClientService
+	servers map[int32]map[string]*rpc.ClientService
 	as      *agent.Service
 }
 
-func (sb *SimpleBalancer) GetServer(target int32, sessionid int32) (s agent.Server, ok bool) {
-	s, ok = sb.servers[target]
-	return
+func (sb *SimpleBalancer) GetServer(target int32, c agent.Client) (agent.Server, bool) {
+	r := rand.New(rand.NewSource(99))
+	ss, ok := sb.servers[target]
+	if ok && len(ss) > 0 {
+		keys := reflect.ValueOf(ss).MapKeys()
+		return ss[keys[r.Intn(len(ss))].String()], true
+	}
+	return nil, false
 }
 
 func (sb *SimpleBalancer) registerServer(cs *rpc.ClientService) {
 	go func() {
-		for {
-			if cs.Init() == nil {
-				sb.servers[cs.Typeid] = cs
-				logger.Infof("%d is running", cs.Typeid)
-				err := sb.as.RunServer(cs)
-				logger.Error(err)
-				delete(sb.servers, cs.Typeid)
+		err := cs.Init()
+		if err == nil {
+			if _, ok := sb.servers[cs.Typeid]; !ok {
+				sb.servers[cs.Typeid] = make(map[string]*rpc.ClientService)
 			}
-			time.Sleep(time.Second)
+			sb.servers[cs.Typeid][cs.Addr] = cs
+			logger.Infof("%s(%d) is running", cs.Addr, cs.Typeid)
+			err = sb.as.RunServer(cs)
+			delete(sb.servers[cs.Typeid], cs.Addr)
 		}
+		logger.Error(err)
 	}()
 }
 
 func NewSimpleBalancer() (sb *SimpleBalancer) {
 	sb = &SimpleBalancer{}
-	sb.servers = make(map[int32]*rpc.ClientService)
+	sb.servers = make(map[int32]map[string]*rpc.ClientService)
 	return
+}
+
+func (sb *SimpleBalancer) subscribe() error {
+	finder := server.Finder{Addr: configrpc.ConfigServerAddr}
+	ch, err := finder.Subscribe("server", &server.Config{})
+	if err != nil {
+		return err
+	}
+	go func() {
+		for {
+			info, ok := (<-ch).(*server.Config)
+			if !ok {
+				logger.Debug("subscribe closed")
+				return
+			}
+			logger.Info("register ", info)
+			sb.registerServer(&rpc.ClientService{Typeid: info.Type, Addr: info.Addr})
+		}
+	}()
+	return nil
 }
 
 func (sb *SimpleBalancer) Start(as *agent.Service) {
 	sb.as = as
-	sb.registerServer(&rpc.ClientService{Typeid: 1, Addr: ":10001"})
-	sb.registerServer(&rpc.ClientService{Typeid: 2, Addr: ":10002"})
+	sb.subscribe()
 }
