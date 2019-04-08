@@ -3,8 +3,8 @@ package simple
 import (
 	"lemna/agent"
 	"lemna/agent/rpc"
+	"lemna/config"
 	configrpc "lemna/config/rpc"
-	"lemna/config/rpc/server"
 	"lemna/logger"
 	"math/rand"
 	"reflect"
@@ -71,14 +71,14 @@ func NewSimpleBalancer() (sb *SimpleBalancer) {
 
 //从配置频道服务器得到服务器信息
 func (sb *SimpleBalancer) subscribe() error {
-	finder := configrpc.ChannelClient{Addr: configrpc.ConfigServerAddr}
-	ch, err := finder.Subscribe("server", &server.Config{})
+	finder := configrpc.ChannelUser{Addr: configrpc.ConfigServerAddr}
+	ch, err := finder.Subscribe("server", &config.ServerConfig{})
 	if err != nil {
 		return err
 	}
 	go func() {
 		for {
-			info, ok := (<-ch).(*server.Config)
+			info, ok := (<-ch).(*config.ServerConfig)
 			if !ok {
 				logger.Debug("subscribe closed")
 				return

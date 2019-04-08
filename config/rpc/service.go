@@ -14,7 +14,7 @@ var ConfigServerAddr = ":10000"
 
 // ChannelService 一个基于grpc的配置订阅/发布频道服务器
 type ChannelService struct {
-	subscribers map[string]Config_SubscribeServer
+	subscribers map[string]Channel_SubscribeServer
 	topics      map[string]map[string]int
 	addr        string
 }
@@ -22,7 +22,7 @@ type ChannelService struct {
 // NewChannelService 新的订阅/发布频道服务器
 func NewChannelService(addr string) *ChannelService {
 	return &ChannelService{
-		subscribers: make(map[string]Config_SubscribeServer),
+		subscribers: make(map[string]Channel_SubscribeServer),
 		topics:      make(map[string]map[string]int),
 		addr:        addr}
 }
@@ -51,7 +51,7 @@ func (ch *ChannelService) Publish(ctx context.Context, msg *ConfigMsg) (*ConfigM
 }
 
 // Subscribe rpc频道订阅实现
-func (ch *ChannelService) Subscribe(msg *ConfigMsg, stream Config_SubscribeServer) error {
+func (ch *ChannelService) Subscribe(msg *ConfigMsg, stream Channel_SubscribeServer) error {
 	//发送订阅主题给订阅者
 	for info := range ch.topics[msg.Name] {
 		msg.Info = info
@@ -80,6 +80,6 @@ func (ch *ChannelService) Run() error {
 		return err
 	}
 	s := grpc.NewServer()
-	RegisterConfigServer(s, ch)
+	RegisterChannelServer(s, ch)
 	return s.Serve(lis)
 }

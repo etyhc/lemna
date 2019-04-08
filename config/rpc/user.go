@@ -9,14 +9,14 @@ import (
 	grpc "google.golang.org/grpc"
 )
 
-type ChannelClient struct {
+type ChannelUser struct {
 	Addr string
 }
 
-func (f *ChannelClient) Publish(s config.Stringer) error {
+func (f *ChannelUser) Publish(s config.Stringer) error {
 	conn, err := grpc.Dial(f.Addr, grpc.WithInsecure())
 	if err == nil {
-		sc := NewConfigClient(conn)
+		sc := NewChannelClient(conn)
 		_, err = sc.Publish(context.Background(), &ConfigMsg{Info: s.String()})
 		logger.Debug(err, s.String())
 		conn.Close()
@@ -24,12 +24,12 @@ func (f *ChannelClient) Publish(s config.Stringer) error {
 	return err
 }
 
-func (f *ChannelClient) Subscribe(info string, t config.Stringer) (<-chan config.Stringer, error) {
+func (f *ChannelUser) Subscribe(info string, t config.Stringer) (<-chan config.Stringer, error) {
 	conn, err := grpc.Dial(f.Addr, grpc.WithInsecure(), grpc.WithBlock())
 	if err != nil {
 		return nil, err
 	}
-	sc := NewConfigClient(conn)
+	sc := NewChannelClient(conn)
 	stream, err := sc.Subscribe(context.Background(), &ConfigMsg{Info: info})
 	if err != nil {
 		conn.Close()
