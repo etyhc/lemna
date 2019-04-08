@@ -48,7 +48,7 @@ func NewSimpleBalancer() (sb *SimpleBalancer) {
 }
 
 func (sb *SimpleBalancer) subscribe() error {
-	finder := server.Finder{Addr: configrpc.ConfigServerAddr}
+	finder := configrpc.ChannelClient{Addr: configrpc.ConfigServerAddr}
 	ch, err := finder.Subscribe("server", &server.Config{})
 	if err != nil {
 		return err

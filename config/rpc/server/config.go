@@ -2,17 +2,19 @@ package server
 
 import "encoding/json"
 
+// Config 服务器配置
 type Config struct {
-	Name string `json:"name"`
-	Addr string `json:"addr"`
-	Type int32  `json:"type"`
+	Name string `json:"name"` //服务器名字
+	Addr string `json:"addr"` //服务器地址
+	Type int32  `json:"type"` //服务器类型
 }
 
-func (s *Config) String() string {
-	ret, _ := json.Marshal(*s)
+func (c *Config) String() string {
+	ret, _ := json.Marshal(*c)
 	return string(ret)
 }
 
-func (s *Config) Init(info string) error {
-	return json.Unmarshal([]byte(info), s)
+// FromString 从info中初始化c
+func (c *Config) FromString(info string) error {
+	return json.Unmarshal([]byte(info), c)
 }

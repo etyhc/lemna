@@ -9,4 +9,5 @@ service Config {
 
 message ConfigMsg {
   string Info = 1;
+  string name = 2;
 }

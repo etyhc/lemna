@@ -6,42 +6,54 @@ import (
 
 	context "golang.org/x/net/context"
 	grpc "google.golang.org/grpc"
+	"google.golang.org/grpc/peer"
 )
 
+// ConfigServerAddr 频道服务器默认地址
 var ConfigServerAddr = ":10000"
 
-type Service struct {
-	subscribers []Config_SubscribeServer
-	servers     map[string]int
+// ChannelService 一个基于grpc的配置订阅/发布频道服务器
+type ChannelService struct {
+	subscribers map[string]Config_SubscribeServer
+	topics      map[string]map[string]int
 	addr        string
 }
 
-func NewService(addr string) *Service {
-	return &Service{
-		subscribers: []Config_SubscribeServer{},
-		servers:     make(map[string]int),
+// NewChannelService 新的订阅/发布频道服务器
+func NewChannelService(addr string) *ChannelService {
+	return &ChannelService{
+		subscribers: make(map[string]Config_SubscribeServer),
+		topics:      make(map[string]map[string]int),
 		addr:        addr}
 }
 
-func (s *Service) Publish(ctx context.Context, msg *ConfigMsg) (*ConfigMsg, error) {
-	s.servers[msg.Info] = s.servers[msg.Info] + 1
-	logger.Debug("pub: ", msg.Info)
-	alive := s.subscribers[:0]
-	for _, stream := range s.subscribers {
-		err := stream.Send(msg)
+// Publish rpc频道发布实现
+func (ch *ChannelService) Publish(ctx context.Context, msg *ConfigMsg) (*ConfigMsg, error) {
+	//新主题加入
+	topic, ok := ch.topics[msg.Name]
+	if !ok {
+		topic = make(map[string]int)
+		ch.topics[msg.Name] = topic
+	}
+	topic[msg.Info] = topic[msg.Info] + 1
+	logger.Debug("pub<", msg.Name, ":", msg.Info, ">")
+	//新主题发送给订阅者
+	for addr := range ch.subscribers {
+		err := ch.subscribers[addr].Send(msg)
 		if err == nil {
 			logger.Debug("sub: ...")
-			alive = append(alive, stream)
 		} else {
 			logger.Error(err)
+			delete(ch.subscribers, addr)
 		}
 	}
-	s.subscribers = alive
 	return msg, nil
 }
 
-func (s *Service) Subscribe(msg *ConfigMsg, stream Config_SubscribeServer) error {
-	for info, _ := range s.servers {
+// Subscribe rpc频道订阅实现
+func (ch *ChannelService) Subscribe(msg *ConfigMsg, stream Config_SubscribeServer) error {
+	//发送订阅主题给订阅者
+	for info := range ch.topics[msg.Name] {
 		msg.Info = info
 		err := stream.Send(msg)
 		if err != nil {
@@ -49,19 +61,25 @@ func (s *Service) Subscribe(msg *ConfigMsg, stream Config_SubscribeServer) error
 		}
 		logger.Debug("sub: ", msg.Info)
 	}
-	s.subscribers = append(s.subscribers, stream)
+
+	//订阅者加入
+	if p, ok := peer.FromContext(stream.Context()); ok {
+		ch.subscribers[p.Addr.String()] = stream
+	}
+	//等待订阅者失效
 	select {
 	case <-stream.Context().Done():
 	}
 	return nil
 }
 
-func (fs *Service) Run() error {
-	lis, err := net.Listen("tcp", fs.addr)
+// Run 运行发布/订阅频道服务器
+func (ch *ChannelService) Run() error {
+	lis, err := net.Listen("tcp", ch.addr)
 	if err != nil {
 		return err
 	}
 	s := grpc.NewServer()
-	RegisterConfigServer(s, fs)
+	RegisterConfigServer(s, ch)
 	return s.Serve(lis)
 }
