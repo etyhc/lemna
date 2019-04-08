@@ -3,6 +3,7 @@ package simple
 import (
 	fmt "fmt"
 	"lemna/agent"
+	"lemna/agent/rpc"
 	"sync"
 )
 
@@ -21,7 +22,7 @@ func (cm *SimpleClientManager) NewClient(sessionid int32) (agent.Client, error) 
 	cm.rw.Lock()
 	c, ok := cm.clients[sessionid]
 	if !ok {
-		c = &SimpleClient{sessionid: sessionid}
+		c = &SimpleClient{sessionid: sessionid, servers: make(map[int32]*rpc.ClientService)}
 		cm.clients[sessionid] = c
 	}
 	cm.rw.Unlock()

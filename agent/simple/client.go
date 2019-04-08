@@ -8,6 +8,7 @@ import (
 type SimpleClient struct {
 	sessionid int32
 	stream    rpc.Client_ForwardServer
+	servers   map[int32]*rpc.ClientService
 }
 
 func (c *SimpleClient) Stream() rpc.Client_ForwardServer {

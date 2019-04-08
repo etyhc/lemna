@@ -28,12 +28,20 @@ func (sb *SimpleBalancer) algorithm(all int) int {
 	return last
 }
 
-// GetServer 根据算法得到类型为target的服务器,c无视了
+// GetServer 如果客户端没有相应类型服务器,根据算法得到类型为target的服务器
 func (sb *SimpleBalancer) GetServer(target int32, c agent.Client) (agent.Server, bool) {
-	ss, ok := sb.servers[target]
-	if ok && len(ss) > 0 {
+	if server, ok := c.(*SimpleClient).servers[target]; ok {
+		select {
+		case <-server.Stream().Context().Done(): //保存的服务器失效
+			delete(c.(*SimpleClient).servers, target)
+		default:
+			return server, ok
+		}
+	}
+	if ss, ok := sb.servers[target]; ok && len(ss) > 0 {
 		keys := reflect.ValueOf(ss).MapKeys()
-		return ss[keys[sb.algorithm(len(ss))].String()], true
+		c.(*SimpleClient).servers[target] = ss[keys[sb.algorithm(len(ss))].String()]
+		return c.(*SimpleClient).servers[target], true
 	}
 	return nil, false
 }
