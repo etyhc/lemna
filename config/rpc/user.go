@@ -45,9 +45,13 @@ func (f *ChannelUser) Subscribe(info string, t config.Stringer) (<-chan config.S
 				break
 			}
 			info := reflect.New(reflect.TypeOf(t).Elem()).Interface().(config.Stringer)
-			info.FromString(in.Info)
-			logger.Debug(info)
-			ret <- info
+			err = info.FromString(in.Info)
+			if err == nil {
+				logger.Debug(info)
+				ret <- info
+			} else {
+				logger.Error(err)
+			}
 		}
 	}()
 	return ret, nil

@@ -41,7 +41,10 @@ func (as *Service) Register(ctx context.Context, msg *rpc.ClientRegMsg) (*rpc.Cl
 		return nil, err
 	}
 	//将session返回给客户端，客户端每次RPC调用都应将此session放入head中
-	grpc.SetHeader(ctx, metadata.Pairs("session", fmt.Sprint(sessionid)))
+	err = grpc.SetHeader(ctx, metadata.Pairs("session", fmt.Sprint(sessionid)))
+	if err != nil {
+		return nil, err
+	}
 	logger.Debug(sessionid, " Register")
 	return msg, nil
 }

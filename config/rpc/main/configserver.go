@@ -3,6 +3,7 @@ package main
 import (
 	"flag"
 	"lemna/config/rpc"
+	"lemna/logger"
 )
 
 var addr *string
@@ -20,5 +21,8 @@ func main() {
 		return
 	}
 	rcs := rpc.NewChannelService(*addr)
-	rcs.Run()
+	err := rcs.Run()
+	if err != nil {
+		logger.Error(err)
+	}
 }

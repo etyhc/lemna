@@ -67,9 +67,7 @@ func (ch *ChannelService) Subscribe(msg *ConfigMsg, stream Channel_SubscribeServ
 		ch.subscribers[p.Addr.String()] = stream
 	}
 	//等待订阅者失效
-	select {
-	case <-stream.Context().Done():
-	}
+	<-stream.Context().Done()
 	return nil
 }
 

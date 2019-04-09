@@ -102,5 +102,8 @@ func (sb *SimpleBalancer) subscribe() error {
 
 func (sb *SimpleBalancer) Start(as *agent.Service) {
 	sb.as = as
-	sb.subscribe()
+	err := sb.subscribe()
+	if err != nil {
+		logger.Error(err)
+	}
 }

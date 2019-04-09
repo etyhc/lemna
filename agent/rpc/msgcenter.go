@@ -36,7 +36,10 @@ func NewMsgCenter() *MsgCenter {
 func (mi *MsgCenter) Reg(msg interface{}, handler MsgHandler) {
 	name := reflect.TypeOf(msg.(proto.Message)).Elem().Name()
 	h := fnv.New32a()
-	h.Write([]byte(name))
+	_, err := h.Write([]byte(name))
+	if err != nil {
+		panic(fmt.Errorf("fnv Hash failed %s", name))
+	}
 	hh := int32(h.Sum32())
 	if info, ok := mi.info[hh]; ok {
 		panic(fmt.Errorf("Hash(%d) conflict %s %s", hh, name, info.elem.Name()))
