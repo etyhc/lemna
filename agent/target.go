@@ -26,18 +26,25 @@ type Target struct {
 	stream Stream
 	id     int32
 	cache  map[int32]*Target
+	dirty  chan int32
 }
 
 // NewTarget 新代理目标
 // s 目标的网络流
 // id 目标的id，客户端唯一，服务器可能不唯一
 func NewTarget(s Stream, id int32) *Target {
-	return &Target{stream: s, id: id, cache: make(map[int32]*Target)}
+	return &Target{stream: s, id: id, cache: make(map[int32]*Target), dirty: make(chan int32)}
 }
 
 // Error 附加目标信息到错误上
 func (t *Target) Error(err interface{}) error {
 	return fmt.Errorf("<id=%d>%s", t.id, err)
+}
+
+// Dirty 标记缓存失效
+// id 使id缓存目标失效，0表示整个缓存失效
+func (t *Target) Dirty(id int32) {
+	t.dirty <- id
 }
 
 // Run 运行转发功能
@@ -49,6 +56,15 @@ func (t *Target) Run(pool TargetPool) error {
 		fmsg, err := t.stream.Recv()
 		if err != nil {
 			return t.Error(err)
+		}
+		select {
+		case id := <-t.dirty:
+			if id == 0 {
+				t.cache = make(map[int32]*Target)
+			} else {
+				delete(t.cache, id)
+			}
+		default:
 		}
 
 		tt := t.cache[fmsg.Target]
