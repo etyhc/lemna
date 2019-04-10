@@ -5,7 +5,7 @@ import (
 	"hash/fnv"
 	"reflect"
 
-	"github.com/protobuf/proto"
+	proto "github.com/golang/protobuf/proto"
 )
 
 /*MsgHandler 是个消息回调函数，需要实现，并注册到MsgCenter
