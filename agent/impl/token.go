@@ -1,4 +1,4 @@
-package simple
+package impl
 
 import fmt "fmt"
 

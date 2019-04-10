@@ -14,10 +14,17 @@ import (
 
 // Service 代理服务
 type Service struct {
-	Port     string        //代理地址
-	Cm       ClientManager //客户端管理器
-	Balancer Balancer      //均衡器
-	Token    Token         //Token
+	addr       string //代理地址
+	serverPool TargetPool
+	token      Token //Token
+	clientPool *clientManager
+}
+
+func NewService(addr string, serverPool TargetPool, t Token) *Service {
+	cp := newClientMananger()
+	cp.SetTargetPool(serverPool)
+	serverPool.SetTargetPool(cp)
+	return &Service{addr: addr, serverPool: serverPool, token: t, clientPool: cp}
 }
 
 // Register rpc.ClientServer.Register的实现,根据token分配唯一sessionid，并将此ID通过消息头返回给客户端
@@ -31,12 +38,7 @@ func (as *Service) Register(ctx context.Context, msg *rpc.ClientRegMsg) (*rpc.Cl
 		return nil, fmt.Errorf("invalid client,no token")
 	}
 	//通过验证从ctx中获得sessionid
-	sessionid, err := as.Token.GetSessionID(token[0])
-	if err != nil {
-		return nil, err
-	}
-	//根据sessionid从client管理器创建一个Client
-	_, err = as.Cm.NewClient(sessionid)
+	sessionid, err := as.token.GetSessionID(token[0])
 	if err != nil {
 		return nil, err
 	}
@@ -62,67 +64,20 @@ func (as *Service) Forward(stream rpc.Client_ForwardServer) error {
 	logger.Debug(session)
 	tmp, _ := strconv.Atoi(session[0])
 	sessionid := int32(tmp)
-	c, err := as.Cm.GetClient(sessionid)
-	if err != nil {
-		return err
-	}
-	c.SetStream(stream)
-	err = as.runClient(c)
-	as.Cm.DelClient(sessionid)
+	//根据sessionid从client管理器创建一个Client
+	client := as.clientPool.newClient(stream, sessionid)
+	err := client.Run(as.clientPool.serverPool)
+	as.clientPool.delClient(sessionid)
 	return err
-}
-
-// runClient 接收客户端消息并转发给均衡器提供的服务器
-func (as *Service) runClient(c Client) error {
-	for {
-		cfmsg, err := c.Stream().Recv()
-		if err != nil {
-			return c.Error(err)
-		}
-		//转发指令
-		server, ok := as.Balancer.GetServer(cfmsg.Target, c)
-		if !ok {
-			return fmt.Errorf("<target=%d> not find server", cfmsg.Target)
-		}
-
-		cfmsg.Target = c.SessionID()
-		err = server.Stream().Send(cfmsg)
-		if err != nil {
-			return server.Error(err)
-		}
-	}
-}
-
-// RunServer 接收服务器消息并转发给相应的客户端
-func (as *Service) RunServer(s Server) error {
-	for {
-		sfmsg, err := s.Stream().Recv()
-		if err != nil {
-			return s.Error(err)
-		}
-		client, err := as.Cm.GetClient(sfmsg.Target)
-		if err != nil {
-			logger.Error(err)
-			continue //未找到用户服务器继续服务
-		}
-		sfmsg.Target = s.TypeID()
-		err = client.Stream().Send(sfmsg)
-		if err != nil {
-			//用户失效，移除用户
-			logger.Error(client.Error(err))
-			as.Cm.DelClient(client.SessionID())
-		}
-	}
 }
 
 // Run 运行代理服务
 func (as *Service) Run() error {
-	lis, err := net.Listen("tcp", as.Port)
+	lis, err := net.Listen("tcp", as.addr)
 	if err != nil {
 		return err
 	}
 	s := grpc.NewServer()
 	rpc.RegisterClientServer(s, as)
-	as.Balancer.Start(as)
 	return s.Serve(lis)
 }
