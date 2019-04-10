@@ -11,15 +11,13 @@ import (
 	"sync"
 )
 
-// BalancePool 简单的无状态均衡器，轮询服务器提供服务
+// BalancePool 无状态均衡服务器池，轮询方式调度服务器提供服务
 type BalancePool struct {
 	servers    map[int32]map[string]*agent.Target
 	mu         sync.Mutex
 	rand       *rand.Rand
 	clientPool agent.TargetPool
 }
-
-var last = 0
 
 // GetTarget 如果客户端没有相应类型服务器,根据算法得到类型为target的服务器
 func (bp *BalancePool) GetTarget(target int32, client *agent.Target) *agent.Target {
@@ -30,9 +28,12 @@ func (bp *BalancePool) GetTarget(target int32, client *agent.Target) *agent.Targ
 	return nil
 }
 
+// SetTargetPool 目标池实现
 func (bp *BalancePool) SetTargetPool(tp agent.TargetPool) {
 	bp.clientPool = tp
 }
+
+var last = 0
 
 //轮询模式选择,TODO有bug
 func (bp *BalancePool) algorithm(all int) int {
@@ -68,6 +69,7 @@ func (bp *BalancePool) registerServer(cs *rpc.ClientService) {
 	}()
 }
 
+// NewBalancePool 新服务器均衡池
 func NewBalancePool() (bp *BalancePool) {
 	bp = &BalancePool{}
 	bp.rand = rand.New(rand.NewSource(99))
@@ -98,6 +100,7 @@ func (bp *BalancePool) subscribe() error {
 	return nil
 }
 
+// Start 启动均衡池，就是订阅服务器信息
 func (bp *BalancePool) Start() {
 	err := bp.subscribe()
 	if err != nil {
