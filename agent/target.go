@@ -8,30 +8,34 @@ import (
 	context "golang.org/x/net/context"
 )
 
-// Stream 目标网络流
+// Stream 代理目标流,接口与grpc Stream保持一致
 type Stream interface {
 	Send(*rpc.ForwardMsg) error
 	Recv() (*rpc.ForwardMsg, error)
 	Context() context.Context
 }
 
-// TargetPool 代理目标池，代理从目标池得转发目标
+// TargetPool 转发目标池，代理从池中得转发目标
 type TargetPool interface {
+	//GetTarget 得到转发目标,没有返回nil
+	//    int32 目标id
+	//  *Target 原目标，根据业务不同，可能需要
 	GetTarget(int32, *Target) *Target
+	//SetTargetPool 设置转发目标池
 	SetTargetPool(TargetPool)
 }
 
-// Target 代理目标，目标可以相互转发消息
+// Target 代理服务的对象统称目标，目标可以相互转发消息
 type Target struct {
-	stream Stream
-	id     int32
-	cache  map[int32]*Target
-	dirty  chan int32
+	stream Stream            //目标网络流
+	id     int32             //目标id
+	cache  map[int32]*Target //转发目标缓存
+	dirty  chan int32        //清理缓存chan
 }
 
 // NewTarget 新代理目标
-// s 目标的网络流
-// id 目标的id，客户端唯一，服务器可能不唯一
+//         s 目标的网络流
+//        id 目标标识，客户端唯一，服务器可能不唯一
 func NewTarget(s Stream, id int32) *Target {
 	return &Target{stream: s, id: id, cache: make(map[int32]*Target), dirty: make(chan int32)}
 }
@@ -41,16 +45,16 @@ func (t *Target) Error(err interface{}) error {
 	return fmt.Errorf("<id=%d>%s", t.id, err)
 }
 
-// Dirty 标记缓存失效
-// id 使id缓存目标失效，0表示整个缓存失效
+// Dirty 标记转发目标缓存失效
+//    id 使某个转发目标缓存失效，0表示整个缓存失效
 func (t *Target) Dirty(id int32) {
 	t.dirty <- id
 }
 
-// Run 运行转发功能
-//     阻塞到原目标错误发生，无视转发目标错误
+// Run 运行转发功能，等待消息并转发
+//     等待消息错误返回，无视转发目标错误
 //     转发成功会缓存转发目标
-//     缓存未找到转发目标，再从目标池寻找目标
+//     缓存未找到转发目标，再从转发目标池寻找转发目标
 func (t *Target) Run(pool TargetPool) error {
 	for {
 		fmsg, err := t.stream.Recv()

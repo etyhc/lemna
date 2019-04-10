@@ -19,7 +19,7 @@ type BalancePool struct {
 	clientPool agent.TargetPool
 }
 
-// GetTarget 如果客户端没有相应类型服务器,根据算法得到类型为target的服务器
+// GetTarget 轮流得到类型为target的服务器,无视client参数
 func (bp *BalancePool) GetTarget(target int32, client *agent.Target) *agent.Target {
 	if ss, ok := bp.servers[target]; ok && len(ss) > 0 {
 		keys := reflect.ValueOf(ss).MapKeys()
@@ -35,7 +35,8 @@ func (bp *BalancePool) SetTargetPool(tp agent.TargetPool) {
 
 var last = 0
 
-//轮询模式选择,TODO有bug
+//algorithm 轮询模式选择
+//BUG(yhc): 不是严格轮询
 func (bp *BalancePool) algorithm(all int) int {
 	if all == 0 {
 		return 0
@@ -78,8 +79,8 @@ func NewBalancePool() (bp *BalancePool) {
 }
 
 //从配置频道服务器得到服务器信息
-func (bp *BalancePool) subscribe() error {
-	finder := configrpc.ChannelUser{Addr: configrpc.ConfigServerAddr}
+func (bp *BalancePool) subscribe(addr string) error {
+	finder := configrpc.ChannelUser{Addr: addr}
 	ch, err := finder.Subscribe("server", &config.ServerConfig{})
 	if err != nil {
 		return err
@@ -100,10 +101,7 @@ func (bp *BalancePool) subscribe() error {
 	return nil
 }
 
-// Start 启动均衡池，就是订阅服务器信息
-func (bp *BalancePool) Start() {
-	err := bp.subscribe()
-	if err != nil {
-		logger.Error(err)
-	}
+// Start 启动均衡池，开始订阅服务器信息
+func (bp *BalancePool) Start(addr string) error {
+	return bp.subscribe(addr)
 }

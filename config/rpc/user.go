@@ -9,10 +9,12 @@ import (
 	grpc "google.golang.org/grpc"
 )
 
+// ChannelUser 频道用户
 type ChannelUser struct {
-	Addr string
+	Addr string //频道地址
 }
 
+// Publish 配置发布用户发布配置
 func (f *ChannelUser) Publish(s config.Stringer) error {
 	conn, err := grpc.Dial(f.Addr, grpc.WithInsecure())
 	if err == nil {
@@ -24,6 +26,7 @@ func (f *ChannelUser) Publish(s config.Stringer) error {
 	return err
 }
 
+// Subscribe 配置订阅用户订阅配置
 func (f *ChannelUser) Subscribe(info string, t config.Stringer) (<-chan config.Stringer, error) {
 	conn, err := grpc.Dial(f.Addr, grpc.WithInsecure(), grpc.WithBlock())
 	if err != nil {

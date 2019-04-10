@@ -12,14 +12,16 @@ import (
 	"google.golang.org/grpc/metadata"
 )
 
-// Service 代理服务
+// Service 代理服务，接受客户端连接，并验证
+//         将客户端消息转发给服务器并将服务器消息转发给客户端
 type Service struct {
-	addr       string //代理地址
-	serverPool TargetPool
-	token      Token //Token
-	clientPool *clientManager
+	addr       string         //代理地址
+	serverPool TargetPool     //服务器池
+	token      Token          //Token
+	clientPool *clientManager //客户端池
 }
 
+// NewService 新代理服务
 func NewService(addr string, serverPool TargetPool, t Token) *Service {
 	cp := newClientMananger()
 	cp.SetTargetPool(serverPool)
@@ -27,7 +29,9 @@ func NewService(addr string, serverPool TargetPool, t Token) *Service {
 	return &Service{addr: addr, serverPool: serverPool, token: t, clientPool: cp}
 }
 
-// Register rpc.ClientServer.Register的实现,根据token分配唯一sessionid，并将此ID通过消息头返回给客户端
+// Register rpc.ClientServer.Register接口实现
+//          根据token分配唯一sessionid，并将此ID通过消息头返回给客户端
+//          客户端调用Forward时应将此头返回给服务器
 func (as *Service) Register(ctx context.Context, msg *rpc.ClientRegMsg) (*rpc.ClientRegMsg, error) {
 	md, ok := metadata.FromIncomingContext(ctx)
 	if !ok {
@@ -51,7 +55,8 @@ func (as *Service) Register(ctx context.Context, msg *rpc.ClientRegMsg) (*rpc.Cl
 	return msg, nil
 }
 
-// Forward rpc.ClientServer.Forward的实现,会验证消息头的session数据是否有效
+// Forward rpc.ClientServer.Forward接口实现
+//         会验证消息头的session数据是否有效
 func (as *Service) Forward(stream rpc.Client_ForwardServer) error {
 	md, ok := metadata.FromIncomingContext(stream.Context())
 	if !ok {
@@ -71,7 +76,7 @@ func (as *Service) Forward(stream rpc.Client_ForwardServer) error {
 	return err
 }
 
-// Run 运行代理服务
+// Run 运行代理服务,接受客户端的连接
 func (as *Service) Run() error {
 	lis, err := net.Listen("tcp", as.addr)
 	if err != nil {

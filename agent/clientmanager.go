@@ -12,12 +12,12 @@ func newClientMananger() *clientManager {
 	return &clientManager{clients: make(map[int32]*Target)}
 }
 
-// GetTarget 目标池实现，返回转发目标
+// GetTarget 目标池接口实现
 func (tm *clientManager) GetTarget(tt int32, t *Target) *Target {
 	return tm.getClient(tt)
 }
 
-// GetTarget 目标池实现
+// SetTargetPool 目标池接口实现
 func (tm *clientManager) SetTargetPool(tp TargetPool) {
 	tm.serverPool = tp
 }
