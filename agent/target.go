@@ -4,6 +4,7 @@ import (
 	fmt "fmt"
 	"lemna/agent/rpc"
 	"lemna/logger"
+	"sync"
 
 	context "golang.org/x/net/context"
 )
@@ -30,14 +31,15 @@ type Target struct {
 	stream Stream            //目标网络流
 	id     int32             //目标id
 	cache  map[int32]*Target //转发目标缓存
-	dirty  chan int32        //清理缓存chan
+	mu     sync.Mutex
+	Value  interface{} //使用者可以保存任何数据
 }
 
 // NewTarget 新代理目标
 //         s 目标的网络流
 //        id 目标标识，客户端唯一，服务器可能不唯一
 func NewTarget(s Stream, id int32) *Target {
-	return &Target{stream: s, id: id, cache: make(map[int32]*Target), dirty: make(chan int32)}
+	return &Target{stream: s, id: id, cache: make(map[int32]*Target)}
 }
 
 // Error 附加目标信息到错误上
@@ -45,40 +47,28 @@ func (t *Target) Error(err interface{}) error {
 	return fmt.Errorf("<id=%d>%s", t.id, err)
 }
 
-// Dirty 标记转发目标缓存失效
-//    id 使某个转发目标缓存失效，0表示整个缓存失效
-func (t *Target) Dirty(id int32) {
-	t.dirty <- id
-}
-
-// Run 运行转发功能，等待消息并转发
-//     等待消息错误返回，无视转发目标错误
-//     转发成功会缓存转发目标
-//     缓存未找到转发目标，再从转发目标池寻找转发目标
+// Run  运行转发功能，循环等待消息并转发
+// pool 转发目标池
+//      等待消息错误返回
+//      在自己的缓存未找到转发目标，再从转发目标池寻找转发目标，无视无转发目标错误
+//      将自己缓存到转发目标
+//      转发失败清除自己缓存的转发目标
 func (t *Target) Run(pool TargetPool) error {
 	for {
 		fmsg, err := t.stream.Recv()
 		if err != nil {
 			return t.Error(err)
 		}
-		select {
-		case id := <-t.dirty:
-			if id == 0 {
-				t.cache = make(map[int32]*Target)
-			} else {
-				delete(t.cache, id)
-			}
-		default:
-		}
 
-		tt := t.cache[fmsg.Target]
-		if tt == nil {
+		tt, ok := t.cache[fmsg.Target]
+		if !ok {
 			tt = pool.GetTarget(fmsg.Target, t)
+			if tt == nil {
+				logger.Errorf("not find target<%d>", fmsg.Target)
+				continue
+			}
 		}
-		if tt == nil {
-			logger.Errorf("not find target<%d>", fmsg.Target)
-			continue
-		}
+		tt.cache[t.id] = t
 
 		//转发指令
 		fmsg.Target = t.id
@@ -89,7 +79,5 @@ func (t *Target) Run(pool TargetPool) error {
 			delete(t.cache, tt.id)
 			continue
 		}
-		//转发成功缓存目标
-		t.cache[tt.id] = tt
 	}
 }

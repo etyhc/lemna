@@ -14,10 +14,9 @@ func init() {
 	addr = flag.String("addr", ":9999", "要绑定的地址")
 	configaddr = flag.String("config", configrpc.ConfigServerAddr, "订阅服务器地址")
 	h = flag.Bool("h", false, "this help")
-	bp = impl.NewBalancePool()
 }
 
-var bp *impl.BalancePool
+var sp *impl.ServerPool
 var addr *string
 var configaddr *string
 var h *bool
@@ -28,11 +27,11 @@ func main() {
 		flag.Usage()
 		return
 	}
-	if err := bp.Start(*configaddr); err != nil {
+	if err := sp.SubscribeServer(*configaddr, &impl.BindScheduler{}); err != nil {
 		logger.Error(err)
 		return
 	}
-	as = agent.NewService(*addr, bp, impl.NewSimpleToken())
+	as = agent.NewService(*addr, sp, impl.NewSimpleToken())
 	if err := as.Run(); err != nil {
 		logger.Error(err)
 	}
