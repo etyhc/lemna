@@ -8,7 +8,10 @@ import (
 	"lemna/logger"
 )
 
-// SubServerPool 无状态均衡服务器池，轮询方式调度服务器提供服务
+//SubServerPool 订阅服务器信息并连接的服务器池
+//              根据服务器调度信息，提供服务器调度，被调度的服务器都应该是无状态的
+//              如果是有状态服务器，那么服务器应设置成SERVERSCHENIL,不让代理服务器进行调度
+//              并自己实现有状态调度器，与客户端协调状态
 type SubServerPool struct {
 	servers    map[int32]map[string]*agent.Server
 	clientPool agent.ClientPool
@@ -34,12 +37,12 @@ func schedule(servers map[string]*agent.Server, client *agent.Client) *agent.Ser
 	return ret
 }
 
-//GetTarget 目标池实现
+//GetServer 服务器池接口实现
 func (ssp *SubServerPool) GetServer(target int32, client *agent.Client) *agent.Server {
 	return schedule(ssp.servers[target], client)
 }
 
-// SetTargetPool 目标池实现
+//SetClientPool 服务器池接口实现
 func (ssp *SubServerPool) SetClientPool(cp agent.ClientPool) {
 	ssp.clientPool = cp
 }

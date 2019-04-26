@@ -1,6 +1,7 @@
 package agent
 
 import (
+	fmt "fmt"
 	"lemna/agent/rpc"
 	"sync"
 )
@@ -25,11 +26,15 @@ func (cm *clientManager) SetServerPool(sp ServerPool) {
 	cm.serverPool = sp
 }
 
-func (cm *clientManager) newClient(s rpc.Client_ForwardServer, id int32) *Client {
+func (cm *clientManager) newClient(s rpc.Client_ForwardServer, id int32) (*Client, error) {
 	cm.mu.Lock()
 	defer cm.mu.Unlock()
-	cm.clients[id] = NewClient(s, id)
-	return cm.clients[id]
+	_, ok := cm.clients[id]
+	if !ok {
+		cm.clients[id] = NewClient(s, id)
+		return cm.clients[id], nil
+	}
+	return nil, fmt.Errorf("repeated sessionid")
 }
 
 func (cm *clientManager) getClient(id int32) *Client {

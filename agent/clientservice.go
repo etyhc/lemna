@@ -70,9 +70,11 @@ func (cs *ClientService) Forward(stream rpc.Client_ForwardServer) error {
 	tmp, _ := strconv.Atoi(session[0])
 	sessionid := int32(tmp)
 	//根据sessionid从client管理器创建一个Client
-	client := cs.clientmgr.newClient(stream, sessionid)
-	err := client.Run(cs.clientmgr.serverPool)
-	cs.clientmgr.delClient(sessionid)
+	client, err := cs.clientmgr.newClient(stream, sessionid)
+	if err == nil {
+		err = client.Run(cs.clientmgr.serverPool)
+		cs.clientmgr.delClient(sessionid)
+	}
 	return err
 }
 

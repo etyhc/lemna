@@ -6,9 +6,10 @@ import (
 	"lemna/logger"
 )
 
+//ClientPool 客户端池接口，供ServerPool使用
 type ClientPool interface {
-	GetClient(cid int32, s *Server) *Client
-	SetServerPool(sp ServerPool)
+	GetClient(int32, *Server) *Client
+	SetServerPool(ServerPool)
 }
 
 // Client 代理服务的对象统称目标，目标可以相互转发消息

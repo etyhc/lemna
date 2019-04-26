@@ -2,7 +2,7 @@ package config
 
 import "encoding/json"
 
-// 调度策略
+//调度策略
 const (
 	SERVERSCHENIL   int32 = iota //不接受调度
 	SERVERSCHEROUND              //轮流调度
