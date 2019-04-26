@@ -27,7 +27,7 @@ func main() {
 		flag.Usage()
 		return
 	}
-	if err := sp.SubscribeServer(*configaddr, &impl.BalanceScheduler{}); err != nil {
+	if err := sp.SubscribeServer(*configaddr); err != nil {
 		logger.Error(err)
 		return
 	}

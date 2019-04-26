@@ -12,17 +12,31 @@ import (
 type SubServerPool struct {
 	servers    map[int32]map[string]*agent.Server
 	clientPool agent.ClientPool
-	scheduler  Scheduler
 }
 
-//Scheduler 服务器调度器
-type Scheduler interface {
-	schedule(map[string]*agent.Server, *agent.Client) *agent.Server
+func schedule(servers map[string]*agent.Server, client *agent.Client) *agent.Server {
+	var ret *agent.Server
+	for _, server := range servers {
+		switch server.Info.Sche {
+		case config.SERVERSCHEROUND:
+			if ret == nil || ret.Round > server.Round {
+				ret = server
+			}
+		case config.SERVERSCHELOAD:
+			if ret == nil || ret.Info.Load > server.Info.Load {
+				ret = server
+			}
+		}
+	}
+	if ret != nil {
+		ret.Round++
+	}
+	return ret
 }
 
 //GetTarget 目标池实现
 func (ssp *SubServerPool) GetServer(target int32, client *agent.Client) *agent.Server {
-	return ssp.scheduler.schedule(ssp.servers[target], client)
+	return schedule(ssp.servers[target], client)
 }
 
 // SetTargetPool 目标池实现
@@ -30,25 +44,25 @@ func (ssp *SubServerPool) SetClientPool(cp agent.ClientPool) {
 	ssp.clientPool = cp
 }
 
-func (ssp *SubServerPool) refreshServer(config *config.ServerConfig) bool {
-	if servers, ok := ssp.servers[config.Type]; ok {
-		if s, ok := servers[config.Addr]; ok {
-			s.Info = config
+func (ssp *SubServerPool) refreshServer(info *config.ServerInfo) bool {
+	if servers, ok := ssp.servers[info.Type]; ok {
+		if s, ok := servers[info.Addr]; ok {
+			s.Info = info
 			return ok
 		}
 	}
 	return false
 }
 
-func (ssp *SubServerPool) registerServer(config *config.ServerConfig) {
+func (ssp *SubServerPool) registerServer(info *config.ServerInfo) {
 	go func() {
-		cs := &rpc.ClientService{Addr: config.Addr, Typeid: config.Type}
+		cs := &rpc.ClientService{Addr: info.Addr, Typeid: info.Type}
 		err := cs.Init()
 		if err == nil {
 			if _, ok := ssp.servers[cs.Typeid]; !ok {
 				ssp.servers[cs.Typeid] = make(map[string]*agent.Server)
 			}
-			s := agent.NewServer(cs.Forwarder(), cs.TypeID(), config)
+			s := agent.NewServer(cs.Forwarder(), cs.TypeID(), info)
 			ssp.servers[cs.Typeid][cs.Addr] = s
 			logger.Infof("%s(%d) is running", cs.Addr, cs.Typeid)
 			err = s.Run(ssp.clientPool)
@@ -60,17 +74,16 @@ func (ssp *SubServerPool) registerServer(config *config.ServerConfig) {
 
 //SubscribeServer 从配置频道服务器订阅服务器信息
 //                订阅到服务器后链接注册服务器，如果已注册更新服务器信息
-func (ssp *SubServerPool) SubscribeServer(addr string, sch Scheduler) error {
+func (ssp *SubServerPool) SubscribeServer(addr string) error {
 	ssp.servers = make(map[int32]map[string]*agent.Server)
-	ssp.scheduler = sch
 	finder := configrpc.ChannelUser{Addr: addr}
-	ch, err := finder.Subscribe("server", &config.ServerConfig{})
+	ch, err := finder.Subscribe("server", &config.ServerInfo{})
 	if err != nil {
 		return err
 	}
 	go func() {
 		for {
-			info, ok := (<-ch).(*config.ServerConfig)
+			info, ok := (<-ch).(*config.ServerInfo)
 			if !ok {
 				logger.Debug("subscribe closed")
 				return

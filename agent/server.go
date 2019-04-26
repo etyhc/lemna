@@ -15,10 +15,11 @@ type ServerPool interface {
 type Server struct {
 	stream rpc.Server_ForwardClient //目标网络流
 	typeid int32
-	Info   *config.ServerConfig
+	Info   *config.ServerInfo
+	Round  int32
 }
 
-func NewServer(stream rpc.Server_ForwardClient, tid int32, info *config.ServerConfig) *Server {
+func NewServer(stream rpc.Server_ForwardClient, tid int32, info *config.ServerInfo) *Server {
 	return &Server{stream: stream, typeid: tid, Info: info}
 }
 func (s *Server) Error(err interface{}) error {
