@@ -51,11 +51,16 @@ func (cs *ClientService) Login(ctx context.Context, msg *rpc.LoginMsg) (*rpc.Log
 	if err != nil {
 		return nil, err
 	}
-	if cs.clientmgr.newClient(sessionid) {
-		logger.Debug(sessionid, " Login")
+
+	uid, err := cs.token.GetUID(sessionid)
+	if err != nil {
+		return nil, err
+	}
+	if cs.clientmgr.newClient(uid) {
+		logger.Debug(uid, " Login")
 		return msg, nil
 	}
-	return nil, fmt.Errorf("newClient:repeated sessionid<%d>", sessionid)
+	return nil, fmt.Errorf("newClient:repeated uid<%d>", uid)
 }
 
 // Forward rpc.ClientServer.Forward接口实现
@@ -71,12 +76,12 @@ func (cs *ClientService) Forward(stream rpc.Client_ForwardServer) error {
 	}
 	logger.Debug(session)
 	tmp, _ := strconv.Atoi(session[0])
-	sessionid := int32(tmp)
+	uid, err := cs.token.GetUID(int32(tmp))
 	//根据sessionid从client管理器初始化一个Client
-	client, err := cs.clientmgr.initClient(stream, sessionid)
+	client, err := cs.clientmgr.initClient(stream, uid)
 	if err == nil {
 		err = client.Run(cs.clientmgr.serverPool)
-		cs.clientmgr.delClient(sessionid)
+		cs.clientmgr.delClient(uid)
 	}
 	return err
 }
