@@ -1,45 +1,48 @@
 package agent
 
-import "sync"
+import (
+	"lemna/agent/rpc"
+	"sync"
+)
 
 type clientManager struct {
-	clients    map[int32]*Target
-	serverPool TargetPool
-	cmu        sync.Mutex
+	clients    map[int32]*Client
+	serverPool ServerPool
+	mu         sync.Mutex
 }
 
 func newClientMananger() *clientManager {
-	return &clientManager{clients: make(map[int32]*Target)}
+	return &clientManager{clients: make(map[int32]*Client)}
 }
 
-// GetTarget 目标池接口实现
-func (tm *clientManager) GetTarget(tt int32, t *Target) *Target {
-	return tm.getClient(tt)
+// GetClient 目标池接口实现
+func (cm *clientManager) GetClient(cid int32, s *Server) *Client {
+	return cm.getClient(cid)
 }
 
-// SetTargetPool 目标池接口实现
-func (tm *clientManager) SetTargetPool(tp TargetPool) {
-	tm.serverPool = tp
+// SetServerPool 目标池接口实现
+func (cm *clientManager) SetServerPool(sp ServerPool) {
+	cm.serverPool = sp
 }
 
-func (tm *clientManager) newClient(s Stream, id int32) *Target {
-	tm.cmu.Lock()
-	defer tm.cmu.Unlock()
-	tm.clients[id] = NewTarget(s, id)
-	return tm.clients[id]
+func (cm *clientManager) newClient(s rpc.Client_ForwardServer, id int32) *Client {
+	cm.mu.Lock()
+	defer cm.mu.Unlock()
+	cm.clients[id] = NewClient(s, id)
+	return cm.clients[id]
 }
 
-func (tm *clientManager) getClient(id int32) *Target {
-	tm.cmu.Lock()
-	defer tm.cmu.Unlock()
-	if ret, ok := tm.clients[id]; ok {
+func (cm *clientManager) getClient(id int32) *Client {
+	cm.mu.Lock()
+	defer cm.mu.Unlock()
+	if ret, ok := cm.clients[id]; ok {
 		return ret
 	}
 	return nil
 }
 
-func (tm *clientManager) delClient(id int32) {
-	tm.cmu.Lock()
-	delete(tm.clients, id)
-	tm.cmu.Unlock()
+func (cm *clientManager) delClient(id int32) {
+	cm.mu.Lock()
+	delete(cm.clients, id)
+	cm.mu.Unlock()
 }

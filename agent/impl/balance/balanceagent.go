@@ -8,7 +8,7 @@ import (
 	"lemna/logger"
 )
 
-var as *agent.Service
+var cs *agent.ClientService
 
 func init() {
 	addr = flag.String("addr", ":9999", "要绑定的地址")
@@ -16,7 +16,7 @@ func init() {
 	h = flag.Bool("h", false, "this help")
 }
 
-var sp *impl.ServerPool
+var sp impl.SubServerPool
 var addr *string
 var configaddr *string
 var h *bool
@@ -31,8 +31,8 @@ func main() {
 		logger.Error(err)
 		return
 	}
-	as = agent.NewService(*addr, sp, impl.NewSimpleToken())
-	if err := as.Run(); err != nil {
+	cs = agent.NewClientService(*addr, &sp, impl.NewSimpleToken())
+	if err := cs.Run(); err != nil {
 		logger.Error(err)
 	}
 }

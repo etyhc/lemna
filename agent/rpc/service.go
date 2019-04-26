@@ -44,12 +44,12 @@ type ClientService struct {
 	Addr      string     //服务器地址
 	Typeid    int32      //服务器类型
 	Msgcenter *MsgCenter //消息中心
-	stream    Server_ForwardClient
+	forwarder Server_ForwardClient
 }
 
-// Stream 服务器流
-func (cs *ClientService) Stream() Server_ForwardClient {
-	return cs.stream
+// Forwarder 服务器转发器
+func (cs *ClientService) Forwarder() Server_ForwardClient {
+	return cs.forwarder
 }
 
 // TypeID 服务器类型
@@ -66,21 +66,7 @@ func (cs *ClientService) Init() error {
 	conn, err := grpc.Dial(cs.Addr, grpc.WithInsecure())
 	if err == nil {
 		sc := NewServerClient(conn)
-		cs.stream, err = sc.Forward(context.Background())
+		cs.forwarder, err = sc.Forward(context.Background())
 	}
 	return err
-}
-
-// Run 运行rpc客户端服务，解析消息
-func (cs *ClientService) Run() (err error) {
-	var in *ForwardMsg
-	for {
-		in, err = cs.stream.Recv()
-		if err == nil {
-			err = cs.Msgcenter.Handle(in, cs.stream)
-		}
-		if err != nil {
-			return
-		}
-	}
 }

@@ -63,6 +63,21 @@ func (mi *MsgCenter) Wrap(target int32, msg proto.Message) (*ForwardMsg, error) 
 	return &ForwardMsg{Target: target, Msg: &RawMsg{Type: hash, Raw: buf}}, nil
 }
 
+/*WrapBroadcast 将消息封装为转发消息
+  targets 转发目标数组
+  msg 被编码的消息*/
+func (mi *MsgCenter) WrapBroadcast(targets []int32, msg proto.Message) (*BroadcastMsg, error) {
+	hash, ok := mi.hash[reflect.TypeOf(msg.(proto.Message)).Elem().Name()]
+	if !ok {
+		return nil, fmt.Errorf("%s don't register", reflect.TypeOf(msg.(proto.Message)).Elem().Name())
+	}
+	buf, err := proto.Marshal(msg)
+	if err != nil {
+		return nil, err
+	}
+	return &BroadcastMsg{Targets: targets, Msg: &RawMsg{Type: hash, Raw: buf}}, nil
+}
+
 /*Handle 转发消息处理函数
   fmsg 转发消息
   stream 消息流*/

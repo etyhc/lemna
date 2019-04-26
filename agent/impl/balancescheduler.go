@@ -2,17 +2,19 @@ package impl
 
 import (
 	"lemna/agent"
+	"lemna/logger"
 	"reflect"
 )
 
+// BalanceScheduler 调度器，轮流方式调度服务器
 type BalanceScheduler struct {
 	last int
 }
 
-func (bs *BalanceScheduler) schedule(servers map[string]*server, client *agent.Target) *agent.Target {
+func (bs *BalanceScheduler) schedule(servers map[string]*agent.Server, client *agent.Client) *agent.Server {
 	if len(servers) > 0 {
 		keys := reflect.ValueOf(servers).MapKeys()
-		return servers[keys[bs.algorithm(len(servers))].String()].target
+		return servers[keys[bs.algorithm(len(servers))].String()]
 	}
 	return nil
 }
@@ -24,5 +26,6 @@ func (bs *BalanceScheduler) algorithm(all int) int {
 		return 0
 	}
 	bs.last = (bs.last + 1) % all
+	logger.Debugf("all%d select %d", all, bs.last)
 	return bs.last
 }

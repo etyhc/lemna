@@ -12,27 +12,27 @@ import (
 	"google.golang.org/grpc/metadata"
 )
 
-// Service 代理服务，接受客户端连接，并验证
+// ClientService 代理服务，接受客户端连接，并验证
 //         将客户端消息转发给服务器并将服务器消息转发给客户端
-type Service struct {
+type ClientService struct {
 	addr       string         //代理地址
-	serverPool TargetPool     //服务器池
+	serverPool ServerPool     //服务器池
 	token      Token          //Token
-	clientPool *clientManager //客户端池
+	clientmgr  *clientManager //客户端池
 }
 
-// NewService 新代理服务
-func NewService(addr string, serverPool TargetPool, t Token) *Service {
+// NewClientService 新代理服务
+func NewClientService(addr string, serverPool ServerPool, t Token) *ClientService {
 	cp := newClientMananger()
-	cp.SetTargetPool(serverPool)
-	serverPool.SetTargetPool(cp)
-	return &Service{addr: addr, serverPool: serverPool, token: t, clientPool: cp}
+	cp.SetServerPool(serverPool)
+	serverPool.SetClientPool(cp)
+	return &ClientService{addr: addr, serverPool: serverPool, token: t, clientmgr: cp}
 }
 
-// Register rpc.ClientServer.Register接口实现
-//          根据token分配唯一sessionid，并将此ID通过消息头返回给客户端
-//          客户端调用Forward时应将此头返回给服务器
-func (as *Service) Register(ctx context.Context, msg *rpc.ClientRegMsg) (*rpc.ClientRegMsg, error) {
+// Login rpc.ClientServer.Login接口实现
+//       根据token分配唯一sessionid，并将此ID通过消息头返回给客户端
+//       客户端调用Forward时应将此头返回给服务器
+func (cs *ClientService) Login(ctx context.Context, msg *rpc.LoginMsg) (*rpc.LoginMsg, error) {
 	md, ok := metadata.FromIncomingContext(ctx)
 	if !ok {
 		return nil, fmt.Errorf("invalid rpc,no metadata")
@@ -42,7 +42,7 @@ func (as *Service) Register(ctx context.Context, msg *rpc.ClientRegMsg) (*rpc.Cl
 		return nil, fmt.Errorf("invalid client,no token")
 	}
 	//通过验证从ctx中获得sessionid
-	sessionid, err := as.token.GetSessionID(token[0])
+	sessionid, err := cs.token.GetSessionID(token[0])
 	if err != nil {
 		return nil, err
 	}
@@ -51,13 +51,13 @@ func (as *Service) Register(ctx context.Context, msg *rpc.ClientRegMsg) (*rpc.Cl
 	if err != nil {
 		return nil, err
 	}
-	logger.Debug(sessionid, " Register")
+	logger.Debug(sessionid, " Login")
 	return msg, nil
 }
 
 // Forward rpc.ClientServer.Forward接口实现
 //         会验证消息头的session数据是否有效
-func (as *Service) Forward(stream rpc.Client_ForwardServer) error {
+func (cs *ClientService) Forward(stream rpc.Client_ForwardServer) error {
 	md, ok := metadata.FromIncomingContext(stream.Context())
 	if !ok {
 		return fmt.Errorf("invalid rpc,no metadata")
@@ -70,19 +70,19 @@ func (as *Service) Forward(stream rpc.Client_ForwardServer) error {
 	tmp, _ := strconv.Atoi(session[0])
 	sessionid := int32(tmp)
 	//根据sessionid从client管理器创建一个Client
-	client := as.clientPool.newClient(stream, sessionid)
-	err := client.Run(as.clientPool.serverPool)
-	as.clientPool.delClient(sessionid)
+	client := cs.clientmgr.newClient(stream, sessionid)
+	err := client.Run(cs.clientmgr.serverPool)
+	cs.clientmgr.delClient(sessionid)
 	return err
 }
 
 // Run 运行代理服务,接受客户端的连接
-func (as *Service) Run() error {
-	lis, err := net.Listen("tcp", as.addr)
+func (cs *ClientService) Run() error {
+	lis, err := net.Listen("tcp", cs.addr)
 	if err != nil {
 		return err
 	}
 	s := grpc.NewServer()
-	rpc.RegisterClientServer(s, as)
+	rpc.RegisterClientServer(s, cs)
 	return s.Serve(lis)
 }

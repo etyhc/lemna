@@ -23,38 +23,38 @@ var _ = math.Inf
 // proto package needs to be updated.
 const _ = proto.ProtoPackageIsVersion2 // please upgrade the proto package
 
-type ClientRegMsg struct {
+type LoginMsg struct {
 	Token                string   `protobuf:"bytes,1,opt,name=token,proto3" json:"token,omitempty"`
 	XXX_NoUnkeyedLiteral struct{} `json:"-"`
 	XXX_unrecognized     []byte   `json:"-"`
 	XXX_sizecache        int32    `json:"-"`
 }
 
-func (m *ClientRegMsg) Reset()         { *m = ClientRegMsg{} }
-func (m *ClientRegMsg) String() string { return proto.CompactTextString(m) }
-func (*ClientRegMsg) ProtoMessage()    {}
-func (*ClientRegMsg) Descriptor() ([]byte, []int) {
-	return fileDescriptor_agent_0941b1f590c67ca3, []int{0}
+func (m *LoginMsg) Reset()         { *m = LoginMsg{} }
+func (m *LoginMsg) String() string { return proto.CompactTextString(m) }
+func (*LoginMsg) ProtoMessage()    {}
+func (*LoginMsg) Descriptor() ([]byte, []int) {
+	return fileDescriptor_agent_251feda88b728369, []int{0}
 }
-func (m *ClientRegMsg) XXX_Unmarshal(b []byte) error {
-	return xxx_messageInfo_ClientRegMsg.Unmarshal(m, b)
+func (m *LoginMsg) XXX_Unmarshal(b []byte) error {
+	return xxx_messageInfo_LoginMsg.Unmarshal(m, b)
 }
-func (m *ClientRegMsg) XXX_Marshal(b []byte, deterministic bool) ([]byte, error) {
-	return xxx_messageInfo_ClientRegMsg.Marshal(b, m, deterministic)
+func (m *LoginMsg) XXX_Marshal(b []byte, deterministic bool) ([]byte, error) {
+	return xxx_messageInfo_LoginMsg.Marshal(b, m, deterministic)
 }
-func (dst *ClientRegMsg) XXX_Merge(src proto.Message) {
-	xxx_messageInfo_ClientRegMsg.Merge(dst, src)
+func (dst *LoginMsg) XXX_Merge(src proto.Message) {
+	xxx_messageInfo_LoginMsg.Merge(dst, src)
 }
-func (m *ClientRegMsg) XXX_Size() int {
-	return xxx_messageInfo_ClientRegMsg.Size(m)
+func (m *LoginMsg) XXX_Size() int {
+	return xxx_messageInfo_LoginMsg.Size(m)
 }
-func (m *ClientRegMsg) XXX_DiscardUnknown() {
-	xxx_messageInfo_ClientRegMsg.DiscardUnknown(m)
+func (m *LoginMsg) XXX_DiscardUnknown() {
+	xxx_messageInfo_LoginMsg.DiscardUnknown(m)
 }
 
-var xxx_messageInfo_ClientRegMsg proto.InternalMessageInfo
+var xxx_messageInfo_LoginMsg proto.InternalMessageInfo
 
-func (m *ClientRegMsg) GetToken() string {
+func (m *LoginMsg) GetToken() string {
 	if m != nil {
 		return m.Token
 	}
@@ -73,7 +73,7 @@ func (m *RawMsg) Reset()         { *m = RawMsg{} }
 func (m *RawMsg) String() string { return proto.CompactTextString(m) }
 func (*RawMsg) ProtoMessage()    {}
 func (*RawMsg) Descriptor() ([]byte, []int) {
-	return fileDescriptor_agent_0941b1f590c67ca3, []int{1}
+	return fileDescriptor_agent_251feda88b728369, []int{1}
 }
 func (m *RawMsg) XXX_Unmarshal(b []byte) error {
 	return xxx_messageInfo_RawMsg.Unmarshal(m, b)
@@ -107,6 +107,52 @@ func (m *RawMsg) GetRaw() []byte {
 	return nil
 }
 
+type BroadcastMsg struct {
+	Targets              []int32  `protobuf:"varint,1,rep,packed,name=targets,proto3" json:"targets,omitempty"`
+	Msg                  *RawMsg  `protobuf:"bytes,2,opt,name=msg,proto3" json:"msg,omitempty"`
+	XXX_NoUnkeyedLiteral struct{} `json:"-"`
+	XXX_unrecognized     []byte   `json:"-"`
+	XXX_sizecache        int32    `json:"-"`
+}
+
+func (m *BroadcastMsg) Reset()         { *m = BroadcastMsg{} }
+func (m *BroadcastMsg) String() string { return proto.CompactTextString(m) }
+func (*BroadcastMsg) ProtoMessage()    {}
+func (*BroadcastMsg) Descriptor() ([]byte, []int) {
+	return fileDescriptor_agent_251feda88b728369, []int{2}
+}
+func (m *BroadcastMsg) XXX_Unmarshal(b []byte) error {
+	return xxx_messageInfo_BroadcastMsg.Unmarshal(m, b)
+}
+func (m *BroadcastMsg) XXX_Marshal(b []byte, deterministic bool) ([]byte, error) {
+	return xxx_messageInfo_BroadcastMsg.Marshal(b, m, deterministic)
+}
+func (dst *BroadcastMsg) XXX_Merge(src proto.Message) {
+	xxx_messageInfo_BroadcastMsg.Merge(dst, src)
+}
+func (m *BroadcastMsg) XXX_Size() int {
+	return xxx_messageInfo_BroadcastMsg.Size(m)
+}
+func (m *BroadcastMsg) XXX_DiscardUnknown() {
+	xxx_messageInfo_BroadcastMsg.DiscardUnknown(m)
+}
+
+var xxx_messageInfo_BroadcastMsg proto.InternalMessageInfo
+
+func (m *BroadcastMsg) GetTargets() []int32 {
+	if m != nil {
+		return m.Targets
+	}
+	return nil
+}
+
+func (m *BroadcastMsg) GetMsg() *RawMsg {
+	if m != nil {
+		return m.Msg
+	}
+	return nil
+}
+
 type ForwardMsg struct {
 	Target               int32    `protobuf:"varint,1,opt,name=target,proto3" json:"target,omitempty"`
 	Msg                  *RawMsg  `protobuf:"bytes,2,opt,name=msg,proto3" json:"msg,omitempty"`
@@ -119,7 +165,7 @@ func (m *ForwardMsg) Reset()         { *m = ForwardMsg{} }
 func (m *ForwardMsg) String() string { return proto.CompactTextString(m) }
 func (*ForwardMsg) ProtoMessage()    {}
 func (*ForwardMsg) Descriptor() ([]byte, []int) {
-	return fileDescriptor_agent_0941b1f590c67ca3, []int{2}
+	return fileDescriptor_agent_251feda88b728369, []int{3}
 }
 func (m *ForwardMsg) XXX_Unmarshal(b []byte) error {
 	return xxx_messageInfo_ForwardMsg.Unmarshal(m, b)
@@ -154,8 +200,9 @@ func (m *ForwardMsg) GetMsg() *RawMsg {
 }
 
 func init() {
-	proto.RegisterType((*ClientRegMsg)(nil), "rpc.ClientRegMsg")
+	proto.RegisterType((*LoginMsg)(nil), "rpc.LoginMsg")
 	proto.RegisterType((*RawMsg)(nil), "rpc.RawMsg")
+	proto.RegisterType((*BroadcastMsg)(nil), "rpc.BroadcastMsg")
 	proto.RegisterType((*ForwardMsg)(nil), "rpc.ForwardMsg")
 }
 
@@ -171,7 +218,7 @@ const _ = grpc.SupportPackageIsVersion4
 //
 // For semantics around ctx use and closing/ending streaming RPCs, please refer to https://godoc.org/google.golang.org/grpc#ClientConn.NewStream.
 type ClientClient interface {
-	Register(ctx context.Context, in *ClientRegMsg, opts ...grpc.CallOption) (*ClientRegMsg, error)
+	Login(ctx context.Context, in *LoginMsg, opts ...grpc.CallOption) (*LoginMsg, error)
 	Forward(ctx context.Context, opts ...grpc.CallOption) (Client_ForwardClient, error)
 }
 
@@ -183,9 +230,9 @@ func NewClientClient(cc *grpc.ClientConn) ClientClient {
 	return &clientClient{cc}
 }
 
-func (c *clientClient) Register(ctx context.Context, in *ClientRegMsg, opts ...grpc.CallOption) (*ClientRegMsg, error) {
-	out := new(ClientRegMsg)
-	err := c.cc.Invoke(ctx, "/rpc.Client/Register", in, out, opts...)
+func (c *clientClient) Login(ctx context.Context, in *LoginMsg, opts ...grpc.CallOption) (*LoginMsg, error) {
+	out := new(LoginMsg)
+	err := c.cc.Invoke(ctx, "/rpc.Client/Login", in, out, opts...)
 	if err != nil {
 		return nil, err
 	}
@@ -225,7 +272,7 @@ func (x *clientForwardClient) Recv() (*ForwardMsg, error) {
 
 // ClientServer is the server API for Client service.
 type ClientServer interface {
-	Register(context.Context, *ClientRegMsg) (*ClientRegMsg, error)
+	Login(context.Context, *LoginMsg) (*LoginMsg, error)
 	Forward(Client_ForwardServer) error
 }
 
@@ -233,20 +280,20 @@ func RegisterClientServer(s *grpc.Server, srv ClientServer) {
 	s.RegisterService(&_Client_serviceDesc, srv)
 }
 
-func _Client_Register_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
-	in := new(ClientRegMsg)
+func _Client_Login_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
+	in := new(LoginMsg)
 	if err := dec(in); err != nil {
 		return nil, err
 	}
 	if interceptor == nil {
-		return srv.(ClientServer).Register(ctx, in)
+		return srv.(ClientServer).Login(ctx, in)
 	}
 	info := &grpc.UnaryServerInfo{
 		Server:     srv,
-		FullMethod: "/rpc.Client/Register",
+		FullMethod: "/rpc.Client/Login",
 	}
 	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
-		return srv.(ClientServer).Register(ctx, req.(*ClientRegMsg))
+		return srv.(ClientServer).Login(ctx, req.(*LoginMsg))
 	}
 	return interceptor(ctx, in, info, handler)
 }
@@ -282,8 +329,8 @@ var _Client_serviceDesc = grpc.ServiceDesc{
 	HandlerType: (*ClientServer)(nil),
 	Methods: []grpc.MethodDesc{
 		{
-			MethodName: "Register",
-			Handler:    _Client_Register_Handler,
+			MethodName: "Login",
+			Handler:    _Client_Login_Handler,
 		},
 	},
 	Streams: []grpc.StreamDesc{
@@ -323,7 +370,7 @@ func (c *serverClient) Forward(ctx context.Context, opts ...grpc.CallOption) (Se
 
 type Server_ForwardClient interface {
 	Send(*ForwardMsg) error
-	Recv() (*ForwardMsg, error)
+	Recv() (*BroadcastMsg, error)
 	grpc.ClientStream
 }
 
@@ -335,8 +382,8 @@ func (x *serverForwardClient) Send(m *ForwardMsg) error {
 	return x.ClientStream.SendMsg(m)
 }
 
-func (x *serverForwardClient) Recv() (*ForwardMsg, error) {
-	m := new(ForwardMsg)
+func (x *serverForwardClient) Recv() (*BroadcastMsg, error) {
+	m := new(BroadcastMsg)
 	if err := x.ClientStream.RecvMsg(m); err != nil {
 		return nil, err
 	}
@@ -357,7 +404,7 @@ func _Server_Forward_Handler(srv interface{}, stream grpc.ServerStream) error {
 }
 
 type Server_ForwardServer interface {
-	Send(*ForwardMsg) error
+	Send(*BroadcastMsg) error
 	Recv() (*ForwardMsg, error)
 	grpc.ServerStream
 }
@@ -366,7 +413,7 @@ type serverForwardServer struct {
 	grpc.ServerStream
 }
 
-func (x *serverForwardServer) Send(m *ForwardMsg) error {
+func (x *serverForwardServer) Send(m *BroadcastMsg) error {
 	return x.ServerStream.SendMsg(m)
 }
 
@@ -393,22 +440,24 @@ var _Server_serviceDesc = grpc.ServiceDesc{
 	Metadata: "agent.proto",
 }
 
-func init() { proto.RegisterFile("agent.proto", fileDescriptor_agent_0941b1f590c67ca3) }
+func init() { proto.RegisterFile("agent.proto", fileDescriptor_agent_251feda88b728369) }
 
-var fileDescriptor_agent_0941b1f590c67ca3 = []byte{
-	// 223 bytes of a gzipped FileDescriptorProto
-	0x1f, 0x8b, 0x08, 0x00, 0x00, 0x00, 0x00, 0x00, 0x02, 0xff, 0x9c, 0x90, 0xc1, 0x4a, 0xc4, 0x30,
-	0x10, 0x86, 0x37, 0xd6, 0x8d, 0x3a, 0x5d, 0x50, 0x07, 0x91, 0x65, 0x41, 0x58, 0x82, 0x87, 0x9e,
-	0x8a, 0xc6, 0xa3, 0xc7, 0x05, 0x6f, 0x5e, 0xe2, 0x13, 0xc4, 0x75, 0x08, 0x45, 0x6d, 0xc2, 0x74,
-	0xb0, 0xf8, 0xf6, 0x92, 0xb4, 0xa0, 0xe8, 0xcd, 0xdb, 0xcc, 0xff, 0xe7, 0x23, 0x1f, 0x03, 0xb5,
-	0x0f, 0xd4, 0x4b, 0x9b, 0x38, 0x4a, 0xc4, 0x8a, 0xd3, 0xde, 0x5c, 0xc3, 0x6a, 0xf7, 0xd6, 0x51,
-	0x2f, 0x8e, 0xc2, 0xe3, 0x10, 0xf0, 0x02, 0x96, 0x12, 0x5f, 0xa9, 0x5f, 0xab, 0xad, 0x6a, 0x4e,
-	0xdc, 0xb4, 0x98, 0x16, 0xb4, 0xf3, 0x63, 0xee, 0x11, 0x0e, 0xe5, 0x33, 0x51, 0xa9, 0x97, 0xae,
-	0xcc, 0x78, 0x06, 0x15, 0xfb, 0x71, 0x7d, 0xb0, 0x55, 0xcd, 0xca, 0xe5, 0xd1, 0xec, 0x00, 0x1e,
-	0x22, 0x8f, 0x9e, 0x5f, 0x32, 0x73, 0x09, 0x5a, 0x3c, 0x07, 0x92, 0x99, 0x9a, 0x37, 0xbc, 0x82,
-	0xea, 0x7d, 0x08, 0x85, 0xab, 0x6d, 0xdd, 0x72, 0xda, 0xb7, 0xd3, 0x2f, 0x2e, 0xe7, 0x36, 0x82,
-	0x9e, 0xd4, 0xd0, 0xc2, 0xb1, 0xa3, 0xd0, 0x0d, 0x42, 0x8c, 0xe7, 0xe5, 0xdd, 0x4f, 0xe7, 0xcd,
-	0xdf, 0xc8, 0x2c, 0xf0, 0x16, 0x8e, 0x66, 0x05, 0x3c, 0x2d, 0xfd, 0xb7, 0xd0, 0xe6, 0x77, 0x60,
-	0x16, 0x8d, 0xba, 0x51, 0xf6, 0x1e, 0xf4, 0x13, 0xf1, 0x07, 0xf1, 0x3f, 0xe0, 0x67, 0x5d, 0x8e,
-	0x7a, 0xf7, 0x15, 0x00, 0x00, 0xff, 0xff, 0x22, 0x7f, 0x88, 0x81, 0x63, 0x01, 0x00, 0x00,
+var fileDescriptor_agent_251feda88b728369 = []byte{
+	// 256 bytes of a gzipped FileDescriptorProto
+	0x1f, 0x8b, 0x08, 0x00, 0x00, 0x00, 0x00, 0x00, 0x02, 0xff, 0x84, 0x91, 0x4f, 0x4b, 0xc4, 0x30,
+	0x10, 0xc5, 0x37, 0xd6, 0x66, 0x75, 0xba, 0xa2, 0x0e, 0x22, 0x65, 0x41, 0x28, 0xb9, 0xd8, 0x53,
+	0xd1, 0xee, 0xd9, 0x8b, 0x0b, 0x7a, 0xd1, 0x4b, 0xfc, 0x04, 0xb1, 0x0d, 0x61, 0x51, 0x9b, 0x32,
+	0x0d, 0x16, 0xbf, 0xbd, 0x24, 0x69, 0xf1, 0xcf, 0x41, 0x6f, 0xf3, 0xe6, 0xe5, 0x37, 0x2f, 0x93,
+	0x40, 0xa6, 0x8c, 0xee, 0x5c, 0xd5, 0x93, 0x75, 0x16, 0x13, 0xea, 0x1b, 0x51, 0xc0, 0xc1, 0x83,
+	0x35, 0xbb, 0xee, 0x71, 0x30, 0x78, 0x06, 0xa9, 0xb3, 0x2f, 0xba, 0xcb, 0x59, 0xc1, 0xca, 0x43,
+	0x19, 0x85, 0xa8, 0x80, 0x4b, 0x35, 0x7a, 0x1f, 0x61, 0xdf, 0x7d, 0xf4, 0x3a, 0xd8, 0xa9, 0x0c,
+	0x35, 0x9e, 0x40, 0x42, 0x6a, 0xcc, 0xf7, 0x0a, 0x56, 0xae, 0xa4, 0x2f, 0xc5, 0x3d, 0xac, 0x6e,
+	0xc9, 0xaa, 0xb6, 0x51, 0x83, 0xf3, 0x54, 0x0e, 0x4b, 0xa7, 0xc8, 0x68, 0x37, 0xe4, 0xac, 0x48,
+	0xca, 0x54, 0xce, 0x12, 0x2f, 0x20, 0x79, 0x1b, 0x4c, 0x60, 0xb3, 0x3a, 0xab, 0xa8, 0x6f, 0xaa,
+	0x98, 0x24, 0x7d, 0x5f, 0x6c, 0x01, 0xee, 0x2c, 0x8d, 0x8a, 0x5a, 0x3f, 0xe6, 0x1c, 0x78, 0xe4,
+	0xa6, 0xf8, 0x49, 0xfd, 0x33, 0xa4, 0x6e, 0x81, 0x6f, 0x5f, 0x77, 0xba, 0x73, 0x78, 0x09, 0x69,
+	0xd8, 0x14, 0x8f, 0xc2, 0xa1, 0x79, 0xeb, 0xf5, 0x4f, 0x29, 0x16, 0x78, 0x0d, 0xcb, 0x29, 0x17,
+	0x8f, 0x83, 0xf7, 0x75, 0x8b, 0xf5, 0xef, 0x86, 0x58, 0x94, 0xec, 0x8a, 0xd5, 0x37, 0xc0, 0x9f,
+	0x34, 0xbd, 0x6b, 0xc2, 0xcd, 0x1f, 0xf0, 0x69, 0x68, 0x7c, 0x7f, 0x9c, 0x88, 0x3f, 0xf3, 0xf0,
+	0x21, 0x9b, 0xcf, 0x00, 0x00, 0x00, 0xff, 0xff, 0x68, 0x9c, 0xca, 0x65, 0x9f, 0x01, 0x00, 0x00,
 }
