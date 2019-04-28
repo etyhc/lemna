@@ -1,34 +1,54 @@
 package impl
 
-import fmt "fmt"
+import (
+	fmt "fmt"
+	"time"
+)
 
 type SimpleToken struct {
-	data map[string]int32
+	db map[string]token
 }
 
-var tokenMap = map[string]int32{
-	"token1": 1,
-	"token2": 2}
+type token struct {
+	sid     int32
+	timeout int32
+}
 
-func (t *SimpleToken) GetUID(sessionid int32) (int32, error) {
-	for _, v := range t.data {
-		if v == sessionid {
-			return sessionid, nil
+var tokenDB = map[string]token{
+	"token1": {1, 0},
+	"token2": {2, 0}}
+
+func (st *SimpleToken) GetUID(sessionid int32) (int32, error) {
+	for _, tk := range st.db {
+		if tk.sid == sessionid && tk.timeout > 0 {
+			return tk.sid, nil
 		}
 	}
 	return 0, fmt.Errorf("no UID with<sessionid=%d>", sessionid)
 }
 
-func (t *SimpleToken) GetSessionID(token string) (int32, error) {
-	id, ok := t.data[token]
+func (st *SimpleToken) GetSessionID(token string) (int32, error) {
+	tk, ok := st.db[token]
 	if ok {
-		return id, nil
+		tk.timeout = 5
+		return tk.sid, nil
 	}
-	return id, fmt.Errorf("invaild SimpleToken %s", token)
+	return 0, fmt.Errorf("invaild SimpleToken %s", token)
 }
 
-func NewSimpleToken() (t *SimpleToken) {
-	t = &SimpleToken{}
-	t.data = tokenMap
+func NewSimpleToken() (st *SimpleToken) {
+	st = &SimpleToken{}
+	st.db = tokenDB
+	go func() {
+		tick := time.NewTicker(time.Duration(time.Second))
+		for {
+			<-tick.C
+			for _, tk := range st.db {
+				if tk.timeout > 0 {
+					tk.timeout--
+				}
+			}
+		}
+	}()
 	return
 }
