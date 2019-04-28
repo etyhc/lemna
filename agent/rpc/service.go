@@ -4,28 +4,53 @@ import (
 	fmt "fmt"
 	"net"
 
+	proto "github.com/golang/protobuf/proto"
 	context "golang.org/x/net/context"
 	"google.golang.org/grpc"
 )
+
+type Service struct {
+	Addr      string     //服务器地址
+	Typeid    int32      //服务器类型
+	Msgcenter *MsgCenter //消息中心
+}
 
 // ServerService rpc服务器端封装，用于服务器开发
 type ServerService struct {
 	Addr      string     //服务器地址
 	Typeid    int32      //服务器类型
 	Msgcenter *MsgCenter //消息中心
+	stream    Server_ForwardServer
 }
 
 // Forward rpc.Forward调用实现,解析转发来的消息
 func (ss *ServerService) Forward(stream Server_ForwardServer) error {
+	ss.stream = stream
 	for {
 		in, err := stream.Recv()
 		if err == nil {
-			err = ss.Msgcenter.Handle(in, stream)
+			err = ss.Msgcenter.Handle(in)
 		}
 		if err != nil {
 			return err
 		}
 	}
+}
+
+func (ss *ServerService) Broadcast(targets []int32, msg proto.Message) error {
+	sendmsg, err := ss.Msgcenter.WrapBroadcast(targets, msg)
+	if err == nil {
+		return ss.stream.Send(sendmsg)
+	}
+	return err
+}
+
+func (ss *ServerService) Send(target int32, msg proto.Message) error {
+	sendmsg, err := ss.Msgcenter.WrapBroadcast([]int32{target}, msg)
+	if err == nil {
+		return ss.stream.Send(sendmsg)
+	}
+	return err
 }
 
 // Run 运行rpc服务,阻塞的

@@ -11,17 +11,21 @@ type SimpleToken struct {
 
 type token struct {
 	sid     int32
+	uid     int32
 	timeout int32
 }
 
 var tokenDB = map[string]token{
-	"token1": {1, 0},
-	"token2": {2, 0}}
+	"token1": {1, 1, 0},
+	"token2": {2, 2, 0}}
 
 func (st *SimpleToken) GetUID(sessionid int32) (int32, error) {
 	for _, tk := range st.db {
-		if tk.sid == sessionid && tk.timeout > 0 {
-			return tk.sid, nil
+		if tk.sid == sessionid {
+			if tk.timeout > 0 {
+				return tk.uid, nil
+			}
+			return 0, fmt.Errorf("<sessionid=%d> timeout", sessionid)
 		}
 	}
 	return 0, fmt.Errorf("no UID with<sessionid=%d>", sessionid)

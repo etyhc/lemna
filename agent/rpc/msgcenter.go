@@ -10,9 +10,8 @@ import (
 
 /*MsgHandler 是个消息回调函数，需要实现，并注册到MsgCenter
   target 消息来源
-  msg 消息本体
-  stream grpc流，用于回复*/
-type MsgHandler func(target int32, msg interface{}, stream interface{})
+  msg 消息本体*/
+type MsgHandler func(target int32, msg interface{})
 
 type msgInfo struct {
 	elem    reflect.Type
@@ -48,10 +47,7 @@ func (mi *MsgCenter) Reg(msg interface{}, handler MsgHandler) {
 	mi.hash[name] = hh
 }
 
-/*Wrap 将消息封装为转发消息
-  target 转发目标
-  msg 被编码的消息*/
-func (mi *MsgCenter) Wrap(target int32, msg proto.Message) (*ForwardMsg, error) {
+func (mi *MsgCenter) wrapRaw(msg proto.Message) (*RawMsg, error) {
 	hash, ok := mi.hash[reflect.TypeOf(msg.(proto.Message)).Elem().Name()]
 	if !ok {
 		return nil, fmt.Errorf("%s don't register", reflect.TypeOf(msg.(proto.Message)).Elem().Name())
@@ -60,28 +56,34 @@ func (mi *MsgCenter) Wrap(target int32, msg proto.Message) (*ForwardMsg, error) 
 	if err != nil {
 		return nil, err
 	}
-	return &ForwardMsg{Target: target, Msg: &RawMsg{Type: hash, Raw: buf}}, nil
+	return &RawMsg{Type: hash, Raw: buf}, nil
+}
+
+/*Wrap 将消息封装为转发消息
+  target 转发目标
+  msg 被编码的消息*/
+func (mi *MsgCenter) Wrap(target int32, msg proto.Message) (*ForwardMsg, error) {
+	raw, err := mi.wrapRaw(msg)
+	if err == nil {
+		return &ForwardMsg{Target: target, Msg: raw}, nil
+	}
+	return nil, err
 }
 
 /*WrapBroadcast 将消息封装为转发消息
   targets 转发目标数组
   msg 被编码的消息*/
 func (mi *MsgCenter) WrapBroadcast(targets []int32, msg proto.Message) (*BroadcastMsg, error) {
-	hash, ok := mi.hash[reflect.TypeOf(msg.(proto.Message)).Elem().Name()]
-	if !ok {
-		return nil, fmt.Errorf("%s don't register", reflect.TypeOf(msg.(proto.Message)).Elem().Name())
+	raw, err := mi.wrapRaw(msg)
+	if err == nil {
+		return &BroadcastMsg{Targets: targets, Msg: raw}, nil
 	}
-	buf, err := proto.Marshal(msg)
-	if err != nil {
-		return nil, err
-	}
-	return &BroadcastMsg{Targets: targets, Msg: &RawMsg{Type: hash, Raw: buf}}, nil
+	return nil, err
 }
 
 /*Handle 转发消息处理函数
-  fmsg 转发消息
-  stream 消息流*/
-func (mi *MsgCenter) Handle(fmsg *ForwardMsg, stream interface{}) error {
+  fmsg 转发消息*/
+func (mi *MsgCenter) Handle(fmsg *ForwardMsg) error {
 	info, ok := mi.info[fmsg.Msg.Type]
 	if !ok {
 		return fmt.Errorf("invalid message type %d", fmsg.Msg.Type)
@@ -91,6 +93,6 @@ func (mi *MsgCenter) Handle(fmsg *ForwardMsg, stream interface{}) error {
 	if err != nil {
 		return err
 	}
-	info.handler(fmsg.Target, msg, stream)
+	info.handler(fmsg.Target, msg)
 	return nil
 }
