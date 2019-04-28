@@ -4,7 +4,7 @@ import (
 	"flag"
 	"lemna/agent"
 	"lemna/agent/impl"
-	configrpc "lemna/config/rpc"
+	"lemna/content/rpc"
 	"lemna/logger"
 )
 
@@ -12,7 +12,7 @@ var cs *agent.ClientService
 
 func init() {
 	addr = flag.String("addr", ":9999", "要绑定的地址")
-	configaddr = flag.String("config", configrpc.ConfigServerAddr, "订阅服务器地址")
+	configaddr = flag.String("config", rpc.SERVERADDR, "订阅服务器地址")
 	h = flag.Bool("h", false, "this help")
 }
 

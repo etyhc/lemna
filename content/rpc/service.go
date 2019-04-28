@@ -9,8 +9,8 @@ import (
 	"google.golang.org/grpc/peer"
 )
 
-// ConfigServerAddr 频道服务器默认地址
-var ConfigServerAddr = ":10000"
+// ServiceAddr 频道服务器默认地址
+var SERVERADDR = ":10000"
 
 // ChannelService 一个基于grpc的配置订阅/发布频道服务
 type ChannelService struct {
@@ -28,7 +28,7 @@ func NewChannelService(addr string) *ChannelService {
 }
 
 // Publish rpc配置频道发布实现
-func (ch *ChannelService) Publish(ctx context.Context, msg *ConfigMsg) (*ConfigMsg, error) {
+func (ch *ChannelService) Publish(ctx context.Context, msg *ContentMsg) (*ContentMsg, error) {
 	//新主题加入
 	topic, ok := ch.topics[msg.Name]
 	if !ok {
@@ -51,10 +51,10 @@ func (ch *ChannelService) Publish(ctx context.Context, msg *ConfigMsg) (*ConfigM
 }
 
 // Subscribe rpc配置频道订阅实现
-func (ch *ChannelService) Subscribe(msg *ConfigMsg, stream Channel_SubscribeServer) error {
+func (ch *ChannelService) Subscribe(msg *ContentMsg, stream Channel_SubscribeServer) error {
 	//发送订阅主题给订阅者
-	for info := range ch.topics[msg.Name] {
-		msg.Info = info
+	for topic := range ch.topics[msg.Name] {
+		msg.Info = topic
 		err := stream.Send(msg)
 		if err != nil {
 			return err

@@ -1,0 +1,12 @@
+syntax = "proto3";
+package rpc;
+
+service Channel {
+  rpc Publish(ContentMsg)returns (ContentMsg){}
+  rpc Subscribe(ContentMsg) returns (stream ContentMsg) {}
+}
+
+message ContentMsg {
+  string Info = 1;
+  string name = 2;
+}

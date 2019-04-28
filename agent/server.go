@@ -3,7 +3,6 @@ package agent
 import (
 	fmt "fmt"
 	"lemna/agent/rpc"
-	"lemna/config"
 	"lemna/logger"
 )
 
@@ -17,12 +16,12 @@ type ServerPool interface {
 type Server struct {
 	stream rpc.Server_ForwardClient //服务器网络流
 	typeid int32                    //服务器类型
-	Info   *config.ServerInfo       //服务器信息
+	Info   *ServerInfo              //服务器信息
 	Round  int32                    //服务器被调度次数
 }
 
 //NewServer 新服务器
-func NewServer(stream rpc.Server_ForwardClient, tid int32, info *config.ServerInfo) *Server {
+func NewServer(stream rpc.Server_ForwardClient, tid int32, info *ServerInfo) *Server {
 	return &Server{stream: stream, typeid: tid, Info: info}
 }
 

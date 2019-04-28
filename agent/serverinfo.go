@@ -1,4 +1,4 @@
-package config
+package agent
 
 import "encoding/json"
 
@@ -18,7 +18,11 @@ type ServerInfo struct {
 	Load int32  `json:"load"` //服务器负载
 }
 
-func (si *ServerInfo) String() string {
+func (si *ServerInfo) Topic() string {
+	return "ServerInfo"
+}
+
+func (si *ServerInfo) ToString() string {
 	ret, _ := json.Marshal(*si)
 	return string(ret)
 }

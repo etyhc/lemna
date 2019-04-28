@@ -2,7 +2,7 @@ package main
 
 import (
 	"flag"
-	"lemna/config/rpc"
+	"lemna/content/rpc"
 	"lemna/logger"
 )
 
@@ -10,7 +10,7 @@ var addr *string
 var h *bool
 
 func init() {
-	addr = flag.String("addr", rpc.ConfigServerAddr, "要绑定的地址")
+	addr = flag.String("addr", rpc.SERVERADDR, "要绑定的地址")
 	h = flag.Bool("h", false, "this help")
 }
 

@@ -3,8 +3,7 @@ package impl
 import (
 	"lemna/agent"
 	"lemna/agent/rpc"
-	"lemna/config"
-	configrpc "lemna/config/rpc"
+	contentrpc "lemna/content/rpc"
 	"lemna/logger"
 )
 
@@ -21,11 +20,11 @@ func schedule(servers map[string]*agent.Server, client *agent.Client) *agent.Ser
 	var ret *agent.Server
 	for _, server := range servers {
 		switch server.Info.Sche {
-		case config.SERVERSCHEROUND:
+		case agent.SERVERSCHEROUND:
 			if ret == nil || ret.Round > server.Round {
 				ret = server
 			}
-		case config.SERVERSCHELOAD:
+		case agent.SERVERSCHELOAD:
 			if ret == nil || ret.Info.Load > server.Info.Load {
 				ret = server
 			}
@@ -47,7 +46,7 @@ func (ssp *SubServerPool) SetClientPool(cp agent.ClientPool) {
 	ssp.clientPool = cp
 }
 
-func (ssp *SubServerPool) refreshServer(info *config.ServerInfo) bool {
+func (ssp *SubServerPool) refreshServer(info *agent.ServerInfo) bool {
 	if servers, ok := ssp.servers[info.Type]; ok {
 		if s, ok := servers[info.Addr]; ok {
 			s.Info = info
@@ -57,7 +56,7 @@ func (ssp *SubServerPool) refreshServer(info *config.ServerInfo) bool {
 	return false
 }
 
-func (ssp *SubServerPool) registerServer(info *config.ServerInfo) {
+func (ssp *SubServerPool) registerServer(info *agent.ServerInfo) {
 	go func() {
 		cs := &rpc.ClientService{Addr: info.Addr, Typeid: info.Type}
 		err := cs.Init()
@@ -79,14 +78,14 @@ func (ssp *SubServerPool) registerServer(info *config.ServerInfo) {
 //                订阅到服务器后链接注册服务器，如果已注册更新服务器信息
 func (ssp *SubServerPool) SubscribeServer(addr string) error {
 	ssp.servers = make(map[int32]map[string]*agent.Server)
-	finder := configrpc.ChannelUser{Addr: addr}
-	ch, err := finder.Subscribe("server", &config.ServerInfo{})
+	finder := contentrpc.Channel{Addr: addr}
+	ch, err := finder.Subscribe(&agent.ServerInfo{})
 	if err != nil {
 		return err
 	}
 	go func() {
 		for {
-			info, ok := (<-ch).(*config.ServerInfo)
+			info, ok := (<-ch).(*agent.ServerInfo)
 			if !ok {
 				logger.Debug("subscribe closed")
 				return
