@@ -32,23 +32,38 @@ func NewMsgCenter() *MsgCenter {
 /*Reg 消息注册
   msg 消息定义
   handler 消息处理函数*/
-func (mi *MsgCenter) Reg(msg interface{}, handler MsgHandler) {
+func (mc *MsgCenter) Reg(msg interface{}, handler MsgHandler) {
 	name := reflect.TypeOf(msg.(proto.Message)).Elem().Name()
 	h := fnv.New32a()
 	_, err := h.Write([]byte(name))
 	if err != nil {
-		panic(fmt.Errorf("fnv Hash failed %s", name))
+		panic(name + "\n" + err.Error())
 	}
 	hh := int32(h.Sum32())
-	if info, ok := mi.info[hh]; ok {
+	if info, ok := mc.info[hh]; ok {
 		panic(fmt.Errorf("Hash(%d) conflict %s %s", hh, name, info.elem.Name()))
 	}
-	mi.info[hh] = msgInfo{reflect.TypeOf(msg.(proto.Message)).Elem(), handler}
-	mi.hash[name] = hh
+	mc.info[hh] = msgInfo{reflect.TypeOf(msg.(proto.Message)).Elem(), handler}
+	mc.hash[name] = hh
 }
 
-func (mi *MsgCenter) wrapRaw(msg proto.Message) (*RawMsg, error) {
-	hash, ok := mi.hash[reflect.TypeOf(msg.(proto.Message)).Elem().Name()]
+func WrapFMNoCheck(target int32, msg proto.Message) (*ForwardMsg, error) {
+	name := reflect.TypeOf(msg.(proto.Message)).Elem().Name()
+	h := fnv.New32a()
+	_, err := h.Write([]byte(name))
+	if err != nil {
+		return nil, err
+	}
+	hash := int32(h.Sum32())
+	buf, err := proto.Marshal(msg)
+	if err != nil {
+		return nil, err
+	}
+	return &ForwardMsg{Target: target, Msg: &RawMsg{Type: hash, Raw: buf}}, nil
+}
+
+func (mc *MsgCenter) wrapRaw(msg proto.Message) (*RawMsg, error) {
+	hash, ok := mc.hash[reflect.TypeOf(msg.(proto.Message)).Elem().Name()]
 	if !ok {
 		return nil, fmt.Errorf("%s don't register", reflect.TypeOf(msg.(proto.Message)).Elem().Name())
 	}
@@ -62,8 +77,8 @@ func (mi *MsgCenter) wrapRaw(msg proto.Message) (*RawMsg, error) {
 /*Wrap 将消息封装为转发消息
   target 转发目标
   msg 被编码的消息*/
-func (mi *MsgCenter) Wrap(target int32, msg proto.Message) (*ForwardMsg, error) {
-	raw, err := mi.wrapRaw(msg)
+func (mc *MsgCenter) WrapFM(target int32, msg proto.Message) (*ForwardMsg, error) {
+	raw, err := mc.wrapRaw(msg)
 	if err == nil {
 		return &ForwardMsg{Target: target, Msg: raw}, nil
 	}
@@ -73,8 +88,8 @@ func (mi *MsgCenter) Wrap(target int32, msg proto.Message) (*ForwardMsg, error) 
 /*WrapBroadcast 将消息封装为转发消息
   targets 转发目标数组
   msg 被编码的消息*/
-func (mi *MsgCenter) WrapBroadcast(targets []int32, msg proto.Message) (*BroadcastMsg, error) {
-	raw, err := mi.wrapRaw(msg)
+func (mc *MsgCenter) WrapBM(targets []int32, msg proto.Message) (*BroadcastMsg, error) {
+	raw, err := mc.wrapRaw(msg)
 	if err == nil {
 		return &BroadcastMsg{Targets: targets, Msg: raw}, nil
 	}
@@ -83,10 +98,10 @@ func (mi *MsgCenter) WrapBroadcast(targets []int32, msg proto.Message) (*Broadca
 
 /*Handle 转发消息处理函数
   fmsg 转发消息*/
-func (mi *MsgCenter) Handle(fmsg *ForwardMsg) error {
-	info, ok := mi.info[fmsg.Msg.Type]
+func (mc *MsgCenter) Handle(fmsg *ForwardMsg) error {
+	info, ok := mc.info[fmsg.Msg.Type]
 	if !ok {
-		return fmt.Errorf("invalid message type %d", fmsg.Msg.Type)
+		return fmt.Errorf("unregistered message type %d", fmsg.Msg.Type)
 	}
 	msg := reflect.New(info.elem).Interface()
 	err := proto.Unmarshal(fmsg.Msg.Raw, msg.(proto.Message))

@@ -77,6 +77,10 @@ func (cs *ClientService) Forward(stream rpc.Client_ForwardServer) error {
 	if err == nil {
 		err = client.Run(cs.clientmgr.serverPool)
 		cs.clientmgr.delClient(client.id)
+		//通知服务器用户失效
+		for _, server := range client.cache {
+			server.ClientLogout(client.id)
+		}
 	}
 	return err
 }

@@ -14,7 +14,7 @@ type Channel struct {
 	Addr string //频道地址
 }
 
-// Publish 配置发布用户发布配置
+// Publish content.Channel的rpc实现
 func (c *Channel) Publish(ctt content.Content) error {
 	conn, err := grpc.Dial(c.Addr, grpc.WithInsecure())
 	if err == nil {
@@ -26,7 +26,7 @@ func (c *Channel) Publish(ctt content.Content) error {
 	return err
 }
 
-// Subscribe 配置订阅用户订阅配置
+// Subscribe content.Channel的rpc实现
 func (c *Channel) Subscribe(ctt content.Content) (<-chan content.Content, error) {
 	conn, err := grpc.Dial(c.Addr, grpc.WithInsecure(), grpc.WithBlock())
 	if err != nil {

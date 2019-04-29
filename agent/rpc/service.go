@@ -2,6 +2,7 @@ package rpc
 
 import (
 	fmt "fmt"
+	"lemna/logger"
 	"net"
 
 	proto "github.com/golang/protobuf/proto"
@@ -30,15 +31,18 @@ func (ss *ServerService) Forward(stream Server_ForwardServer) error {
 		in, err := stream.Recv()
 		if err == nil {
 			err = ss.Msgcenter.Handle(in)
-		}
-		if err != nil {
+			if err != nil {
+				//忽略错误的消息
+				logger.Error(err)
+			}
+		} else {
 			return err
 		}
 	}
 }
 
 func (ss *ServerService) Broadcast(targets []int32, msg proto.Message) error {
-	sendmsg, err := ss.Msgcenter.WrapBroadcast(targets, msg)
+	sendmsg, err := ss.Msgcenter.WrapBM(targets, msg)
 	if err == nil {
 		return ss.stream.Send(sendmsg)
 	}
@@ -46,7 +50,7 @@ func (ss *ServerService) Broadcast(targets []int32, msg proto.Message) error {
 }
 
 func (ss *ServerService) Send(target int32, msg proto.Message) error {
-	sendmsg, err := ss.Msgcenter.WrapBroadcast([]int32{target}, msg)
+	sendmsg, err := ss.Msgcenter.WrapBM([]int32{target}, msg)
 	if err == nil {
 		return ss.stream.Send(sendmsg)
 	}
