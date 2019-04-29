@@ -1,4 +1,4 @@
-//Package config 配置订阅服务
+//Package content 内容订阅服务，内容可以是任何东西
 package content
 
 // Content 内容序列化反序列化接口

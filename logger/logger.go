@@ -24,6 +24,13 @@ const (
 // LevelStr 默认日志等级字串，表示此行日志等级
 var LevelStr = []string{"", "ERR", "WAR", "INF", "DEB"}
 
+func (level Level) String() string {
+	if level < 0 || int(level) >= len(LevelStr) {
+		return fmt.Sprint(int(level))
+	}
+	return LevelStr[level]
+}
+
 // Logger 日志器
 type Logger struct {
 	pattern Pattern
@@ -48,7 +55,7 @@ type Pattern interface {
 type samplePattern struct{}
 
 func (out *samplePattern) Format(level Level, a ...interface{}) string {
-	return fmt.Sprint(LevelStr[level], ": ", fmt.Sprint(a...))
+	return fmt.Sprint(level, ": ", fmt.Sprint(a...))
 }
 
 func (out *samplePattern) Roll() io.Writer {

@@ -12,10 +12,10 @@ type ClientPool interface {
 	SetServerPool(ServerPool)
 }
 
-// Client 代理服务的对象统称目标，目标可以相互转发消息
+// Client 代理客户端
 type Client struct {
-	stream rpc.Client_ForwardServer //目标网络流
-	id     int32                    //目标id
+	stream rpc.Client_ForwardServer //网络流
+	id     int32                    //客户端id
 	cache  map[int32]*Server        //转发目标缓存
 	Value  interface{}              //使用者可以保存任何数据
 }
@@ -32,12 +32,11 @@ func (c *Client) Error(err interface{}) error {
 	return fmt.Errorf("<id=%d>%s", c.id, err)
 }
 
-// Run  运行转发功能，循环等待消息并转发
-// pool 转发目标池
-//      等待消息错误返回
-//      在自己的缓存未找到转发目标，再从转发目标池寻找转发目标，无视无转发目标错误
-//      将自己缓存到转发目标
-//      转发失败清除自己缓存的转发目标
+//  Run 运行客户端转发功能，循环等待客户端消息并转发给服务器
+// pool 转发服务器池
+//      等待消息错误，返回
+//      在自己的缓存未找到转发服务器，再从转发服务器池寻找转发服务器，无视无转发服务器错误
+//      转发失败清除自己缓存的转发服务器
 func (c *Client) Run(pool ServerPool) error {
 	for {
 		fmsg, err := c.stream.Recv()

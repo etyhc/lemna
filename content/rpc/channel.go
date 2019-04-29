@@ -1,3 +1,4 @@
+//基于grpc的内容发布/订阅实现
 package rpc
 
 import (
@@ -9,7 +10,7 @@ import (
 	grpc "google.golang.org/grpc"
 )
 
-// Channel 频道用户
+// Channel 基于rpc的内容频道实现
 type Channel struct {
 	Addr string //频道地址
 }

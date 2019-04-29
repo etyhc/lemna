@@ -25,11 +25,12 @@ func NewServer(stream rpc.Server_ForwardClient, tid int32, info *ServerInfo) *Se
 	return &Server{stream: stream, typeid: tid, Info: info}
 }
 
-//Error 服务器错误信息
+//Error 附加服务器信息到错误信息上
 func (s *Server) Error(err interface{}) error {
 	return fmt.Errorf("<id=%d>%s", s.typeid, err)
 }
 
+// ClientLogout 代理在移除客户端后会调用此函数通知服务器客户端登出
 func (s *Server) ClientLogout(target int32) {
 	fmsg, err := rpc.WrapFMNoCheck(target, &ClientLogoutMsg{})
 	if err != nil {
