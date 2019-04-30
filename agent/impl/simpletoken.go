@@ -2,11 +2,12 @@ package impl
 
 import (
 	fmt "fmt"
+	"sync/atomic"
 	"time"
 )
 
 type SimpleToken struct {
-	db map[string]token
+	db map[string]*token
 }
 
 type token struct {
@@ -15,14 +16,14 @@ type token struct {
 	timeout int32
 }
 
-var tokenDB = map[string]token{
+var tokenDB = map[string]*token{
 	"token1": {1, 1, 0},
 	"token2": {2, 2, 0}}
 
 func (st *SimpleToken) GetUID(sessionid int32) (int32, error) {
 	for _, tk := range st.db {
 		if tk.sid == sessionid {
-			if tk.timeout > 0 {
+			if atomic.LoadInt32(&tk.timeout) > 0 {
 				return tk.uid, nil
 			}
 			return 0, fmt.Errorf("<sessionid=%d> timeout", sessionid)
@@ -34,7 +35,7 @@ func (st *SimpleToken) GetUID(sessionid int32) (int32, error) {
 func (st *SimpleToken) GetSessionID(token string) (int32, error) {
 	tk, ok := st.db[token]
 	if ok {
-		tk.timeout = 5
+		atomic.StoreInt32(&tk.timeout, 5)
 		return tk.sid, nil
 	}
 	return 0, fmt.Errorf("invaild SimpleToken %s", token)
@@ -49,8 +50,7 @@ func NewSimpleToken() (st *SimpleToken) {
 		for {
 			<-tick.C
 			for _, tk := range st.db {
-				if tk.timeout > 0 {
-					tk.timeout--
+				if atomic.LoadInt32(&tk.timeout) > 0 {
 				}
 			}
 		}
