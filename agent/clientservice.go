@@ -78,8 +78,12 @@ func (cs *ClientService) Forward(stream rpc.Client_ForwardServer) error {
 		err = client.Run(cs.clientmgr.serverPool)
 		cs.clientmgr.delClient(client.id)
 		//通知服务器用户失效
-		for _, server := range client.cache {
-			server.ClientLogout(client.id)
+		logout, err := rpc.WrapFMNoCheck(client.id, &ClientLogoutMsg{})
+		if err == nil {
+			for _, server := range client.cache {
+				logger.Debug(logout)
+				server.stream.Send(logout)
+			}
 		}
 	}
 	return err

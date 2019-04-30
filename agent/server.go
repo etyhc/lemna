@@ -30,14 +30,6 @@ func (s *Server) Error(err interface{}) error {
 	return fmt.Errorf("<id=%d>%s", s.typeid, err)
 }
 
-// ClientLogout 代理在移除客户端后会调用此函数通知服务器客户端登出
-func (s *Server) ClientLogout(target int32) {
-	fmsg, err := rpc.WrapFMNoCheck(target, &ClientLogoutMsg{})
-	if err != nil {
-		s.stream.Send(fmsg)
-	}
-}
-
 //Run 运行服务器,接收服务器消息，转发给客户端
 func (s *Server) Run(pool ClientPool) error {
 	for {
