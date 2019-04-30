@@ -33,7 +33,7 @@ func NewMsgCenter() *MsgCenter {
   msg 消息定义
   handler 消息处理函数*/
 func (mc *MsgCenter) Reg(msg interface{}, handler MsgHandler) {
-	name := reflect.TypeOf(msg.(proto.Message)).Elem().Name()
+	name := reflect.TypeOf(msg).Elem().Name()
 	h := fnv.New32a()
 	_, err := h.Write([]byte(name))
 	if err != nil {
@@ -43,7 +43,7 @@ func (mc *MsgCenter) Reg(msg interface{}, handler MsgHandler) {
 	if info, ok := mc.info[hh]; ok {
 		panic(fmt.Errorf("Hash(%d) conflict %s %s", hh, name, info.elem.Name()))
 	}
-	mc.info[hh] = msgInfo{reflect.TypeOf(msg.(proto.Message)).Elem(), handler}
+	mc.info[hh] = msgInfo{reflect.TypeOf(msg).Elem(), handler}
 	mc.hash[name] = hh
 }
 

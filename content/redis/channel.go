@@ -1,8 +1,9 @@
-package rpc
+package redis
 
 import (
 	"lemna/content"
 	"lemna/logger"
+	"reflect"
 
 	"github.com/gomodule/redigo/redis"
 )
@@ -16,15 +17,16 @@ type Channel struct {
 
 // Publish content.Channel的redis实现
 func (c *Channel) Publish(ctt content.Content) error {
-	rc, err := redis.Dial("tcp", c.Addr)
-	if err != nil {
-		return err
-	}
 	cts, err := content.ToJSON(ctt)
 	if err != nil {
 		return nil
 	}
+	rc, err := redis.Dial("tcp", c.Addr)
+	if err != nil {
+		return err
+	}
 	_, err = rc.Do("PUBLISH", ctt.Topic(), cts)
+	//logger.Debugf("pub:<%s>%s rep:%d", ctt.Topic(), string(cts), reply)
 	rc.Close()
 	return err
 }
@@ -37,7 +39,7 @@ func (c *Channel) Subscribe(ctt content.Content) (<-chan content.Content, error)
 		return nil, err
 	}
 	psc := redis.PubSubConn{Conn: rc}
-	if err := psc.Subscribe(redis.Args{}.AddFlat(ctt.Topic())); err != nil {
+	if err := psc.Subscribe(ctt.Topic()); err != nil {
 		rc.Close()
 		return nil, err
 	}
@@ -50,16 +52,19 @@ func (c *Channel) Subscribe(ctt content.Content) (<-chan content.Content, error)
 			case error:
 				return
 			case redis.Message:
+				//logger.Debug("sub:", n, ctt)
 				if n.Channel == ctt.Topic() {
-					c, err := content.FromJSON(ctt, n.Data)
+					c := reflect.New(reflect.TypeOf(ctt).Elem()).Interface().(content.Content)
+					c, err := content.FromJSON(c, n.Data)
 					if err == nil {
-						logger.Debug(c)
+						//logger.Debug(c)
 						ret <- c
 					} else {
 						logger.Error(err)
 					}
 				}
 			default:
+				//logger.Debug("def:", n)
 			}
 		}
 	}()

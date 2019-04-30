@@ -4,6 +4,7 @@ package rpc
 import (
 	"lemna/content"
 	"lemna/logger"
+	"reflect"
 
 	context "golang.org/x/net/context"
 	grpc "google.golang.org/grpc"
@@ -49,9 +50,10 @@ func (c *Channel) Subscribe(ctt content.Content) (<-chan content.Content, error)
 				conn.Close()
 				break
 			}
-			c, err := content.FromJSON(ctt, []byte(in.Info))
+			c := reflect.New(reflect.TypeOf(ctt).Elem()).Interface().(content.Content)
+			c, err = content.FromJSON(c, []byte(in.Info))
+			logger.Debug(in.Info)
 			if err == nil {
-				logger.Debug(c)
 				ret <- c
 			} else {
 				logger.Error(err)
