@@ -48,7 +48,7 @@ func (mc *MsgCenter) Reg(msg interface{}, handler MsgHandler) {
 }
 
 func WrapFMNoCheck(target int32, msg proto.Message) (*ForwardMsg, error) {
-	name := reflect.TypeOf(msg.(proto.Message)).Elem().Name()
+	name := reflect.TypeOf(msg).Elem().Name()
 	h := fnv.New32a()
 	_, err := h.Write([]byte(name))
 	if err != nil {
@@ -63,9 +63,9 @@ func WrapFMNoCheck(target int32, msg proto.Message) (*ForwardMsg, error) {
 }
 
 func (mc *MsgCenter) wrapRaw(msg proto.Message) (*RawMsg, error) {
-	hash, ok := mc.hash[reflect.TypeOf(msg.(proto.Message)).Elem().Name()]
+	hash, ok := mc.hash[reflect.TypeOf(msg).Elem().Name()]
 	if !ok {
-		return nil, fmt.Errorf("%s don't register", reflect.TypeOf(msg.(proto.Message)).Elem().Name())
+		return nil, fmt.Errorf("%s don't register", reflect.TypeOf(msg).Elem().Name())
 	}
 	buf, err := proto.Marshal(msg)
 	if err != nil {

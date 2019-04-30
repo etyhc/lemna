@@ -3,10 +3,11 @@ package rpc
 import (
 	"lemna/content"
 	"lemna/logger"
-	"reflect"
 
 	"github.com/gomodule/redigo/redis"
 )
+
+const REDISADDR = ":6379"
 
 // Channel redis 频道
 type Channel struct {
@@ -19,9 +20,13 @@ func (c *Channel) Publish(ctt content.Content) error {
 	if err != nil {
 		return err
 	}
-	rc.Do("PUBLISH", ctt.Topic(), ctt.ToString())
+	cts, err := content.ToJSON(ctt)
+	if err != nil {
+		return nil
+	}
+	_, err = rc.Do("PUBLISH", ctt.Topic(), cts)
 	rc.Close()
-	return nil
+	return err
 }
 
 // Subscribe content.Channel的redis实现
@@ -46,11 +51,10 @@ func (c *Channel) Subscribe(ctt content.Content) (<-chan content.Content, error)
 				return
 			case redis.Message:
 				if n.Channel == ctt.Topic() {
-					content := reflect.New(reflect.TypeOf(ctt).Elem()).Interface().(content.Content)
-					err = content.FromString(string(n.Data))
+					c, err := content.FromJSON(ctt, n.Data)
 					if err == nil {
-						logger.Debug(content)
-						ret <- content
+						logger.Debug(c)
+						ret <- c
 					} else {
 						logger.Error(err)
 					}

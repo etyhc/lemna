@@ -10,7 +10,7 @@ import (
 )
 
 // ServiceAddr 频道服务器默认地址
-var SERVERADDR = ":10000"
+const SERVERADDR = ":10000"
 
 // ChannelService 一个基于grpc的内容订阅/发布频道服务
 //                内容是持久的，所以订阅者可以接收到订阅之前的发布内容

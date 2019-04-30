@@ -4,7 +4,6 @@ package rpc
 import (
 	"lemna/content"
 	"lemna/logger"
-	"reflect"
 
 	context "golang.org/x/net/context"
 	grpc "google.golang.org/grpc"
@@ -19,10 +18,12 @@ type Channel struct {
 func (c *Channel) Publish(ctt content.Content) error {
 	conn, err := grpc.Dial(c.Addr, grpc.WithInsecure())
 	if err == nil {
+		defer conn.Close()
 		sc := NewChannelClient(conn)
-		_, err = sc.Publish(context.Background(), &ContentMsg{Info: ctt.ToString(), Name: ctt.Topic()})
-		logger.Debug(err, ctt.ToString())
-		conn.Close()
+		ctb, err := content.ToJSON(ctt)
+		if err == nil {
+			_, err = sc.Publish(context.Background(), &ContentMsg{Info: string(ctb), Name: ctt.Topic()})
+		}
 	}
 	return err
 }
@@ -48,11 +49,10 @@ func (c *Channel) Subscribe(ctt content.Content) (<-chan content.Content, error)
 				conn.Close()
 				break
 			}
-			content := reflect.New(reflect.TypeOf(ctt).Elem()).Interface().(content.Content)
-			err = content.FromString(in.Info)
+			c, err := content.FromJSON(ctt, []byte(in.Info))
 			if err == nil {
-				logger.Debug(content)
-				ret <- content
+				logger.Debug(c)
+				ret <- c
 			} else {
 				logger.Error(err)
 			}

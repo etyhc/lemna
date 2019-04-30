@@ -1,7 +1,5 @@
 package agent
 
-import "encoding/json"
-
 //调度策略
 const (
 	SERVERSCHENIL   int32 = iota //不接受调度
@@ -20,14 +18,4 @@ type ServerInfo struct {
 
 func (si *ServerInfo) Topic() string {
 	return "ServerInfo"
-}
-
-func (si *ServerInfo) ToString() string {
-	ret, _ := json.Marshal(*si)
-	return string(ret)
-}
-
-//FromString 从字串中初始化服务器配置,使用json编码
-func (si *ServerInfo) FromString(info string) error {
-	return json.Unmarshal([]byte(info), si)
 }
