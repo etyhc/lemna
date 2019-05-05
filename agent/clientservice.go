@@ -82,7 +82,7 @@ func (cs *ClientService) Forward(stream rpc.Client_ForwardServer) error {
 		if err == nil {
 			for _, server := range client.cache {
 				logger.Debug(logout)
-				server.stream.Send(logout)
+				server.rpcc.Send(logout)
 			}
 		}
 	}

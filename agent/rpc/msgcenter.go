@@ -8,10 +8,20 @@ import (
 	proto "github.com/golang/protobuf/proto"
 )
 
+/* MsgAgent 消息代理是接收消息的IO
+   MsgCenter处理消息时会将消息代理带入，以便消息回复*/
+type MsgPeer interface {
+	// Broadcast 服务器向客户端广播消息
+	Broadcast([]int32, interface{}) error
+	// Forward 向服务器或者客户端转发消息
+	Forward(int32, interface{}) error
+}
+
 /*MsgHandler 是个消息回调函数，需要实现，并注册到MsgCenter
-  target 消息来源
-  msg 消息本体*/
-type MsgHandler func(target int32, msg interface{})
+  int32 消息来源
+  interface{} 消息本体
+	MsgAgent 消息代理*/
+type MsgHandler func(int32, interface{}, MsgPeer)
 
 type msgInfo struct {
 	elem    reflect.Type
@@ -98,7 +108,7 @@ func (mc *MsgCenter) WrapBM(targets []int32, msg proto.Message) (*BroadcastMsg, 
 
 /*Handle 转发消息处理函数
   fmsg 转发消息*/
-func (mc *MsgCenter) Handle(fmsg *ForwardMsg) error {
+func (mc *MsgCenter) Handle(fmsg *ForwardMsg, from MsgPeer) error {
 	info, ok := mc.info[fmsg.Msg.Type]
 	if !ok {
 		return fmt.Errorf("unregistered message type %d", fmsg.Msg.Type)
@@ -108,6 +118,6 @@ func (mc *MsgCenter) Handle(fmsg *ForwardMsg) error {
 	if err != nil {
 		return err
 	}
-	info.handler(fmsg.Target, msg)
+	info.handler(fmsg.Target, msg, from)
 	return nil
 }

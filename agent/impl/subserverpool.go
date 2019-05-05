@@ -58,17 +58,17 @@ func (ssp *SubServerPool) refreshServer(info *agent.ServerInfo) bool {
 
 func (ssp *SubServerPool) registerServer(info *agent.ServerInfo) {
 	go func() {
-		cs := &rpc.ClientService{Addr: info.Addr, Typeid: info.Type}
-		err := cs.Init()
+		c := rpc.NewClient(info.Addr, info.Type)
+		err := c.Init()
 		if err == nil {
-			if _, ok := ssp.servers[cs.Typeid]; !ok {
-				ssp.servers[cs.Typeid] = make(map[string]*agent.Server)
+			if _, ok := ssp.servers[c.TypeID()]; !ok {
+				ssp.servers[c.TypeID()] = make(map[string]*agent.Server)
 			}
-			s := agent.NewServer(cs.Forwarder(), cs.TypeID(), info)
-			ssp.servers[cs.Typeid][cs.Addr] = s
-			logger.Infof("%s(%d) is running", cs.Addr, cs.Typeid)
+			s := agent.NewServer(c, info)
+			ssp.servers[info.Type][info.Addr] = s
+			logger.Infof("%s(%d) is running", info.Addr, info.Type)
 			err = s.Run(ssp.clientPool)
-			delete(ssp.servers[cs.Typeid], cs.Addr)
+			delete(ssp.servers[info.Type], info.Addr)
 		}
 		logger.Error(err)
 	}()

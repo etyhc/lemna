@@ -1,7 +1,6 @@
 package agent
 
 import (
-	fmt "fmt"
 	"lemna/agent/rpc"
 	"lemna/logger"
 )
@@ -14,26 +13,25 @@ type ServerPool interface {
 
 //Server 服务器
 type Server struct {
-	stream rpc.Server_ForwardClient //服务器网络流
-	typeid int32                    //服务器类型
-	Info   *ServerInfo              //服务器信息
-	Round  int32                    //服务器被调度次数
+	rpcc  *rpc.Client
+	Info  *ServerInfo //服务器信息
+	Round int32       //服务器被调度次数
 }
 
 //NewServer 新服务器
-func NewServer(stream rpc.Server_ForwardClient, tid int32, info *ServerInfo) *Server {
-	return &Server{stream: stream, typeid: tid, Info: info}
+func NewServer(client *rpc.Client, info *ServerInfo) *Server {
+	return &Server{rpcc: client, Info: info}
 }
 
 //Error 附加服务器信息到错误信息上
 func (s *Server) Error(err interface{}) error {
-	return fmt.Errorf("<id=%d>%s", s.typeid, err)
+	return s.rpcc.Error(err)
 }
 
 //Run 运行服务器,接收服务器消息，转发给客户端
 func (s *Server) Run(pool ClientPool) error {
 	for {
-		bmsg, err := s.stream.Recv()
+		bmsg, err := s.rpcc.Recv()
 		if err != nil {
 			return s.Error(err)
 		}
@@ -46,13 +44,13 @@ func (s *Server) Run(pool ClientPool) error {
 			}
 
 			//转发指令
-			err = c.stream.Send(&rpc.ForwardMsg{Target: s.typeid, Msg: bmsg.Msg})
+			err = c.stream.Send(&rpc.ForwardMsg{Target: s.rpcc.TypeID(), Msg: bmsg.Msg})
 			//转发失败
 			if err != nil {
 				logger.Error(c.Error(err))
-				delete(c.cache, s.typeid)
+				delete(c.cache, s.rpcc.TypeID())
 			} else {
-				c.cache[s.typeid] = s
+				c.cache[s.rpcc.TypeID()] = s
 			}
 		}
 	}

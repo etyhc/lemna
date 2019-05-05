@@ -55,11 +55,11 @@ func (c *Client) Run(pool ServerPool) error {
 
 		//转发指令
 		fmsg.Target = c.id
-		err = s.stream.Send(fmsg)
+		err = s.rpcc.Send(fmsg)
 		//转发失败
 		if err != nil {
 			logger.Error(s.Error(err))
-			delete(c.cache, s.typeid)
+			delete(c.cache, s.rpcc.TypeID())
 			continue
 		}
 	}
