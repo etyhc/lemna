@@ -1,5 +1,5 @@
 //基于grpc的内容发布/订阅实现
-package rpc
+package crpc
 
 import (
 	"lemna/content"

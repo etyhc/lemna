@@ -1,4 +1,4 @@
-package rpc
+package arpc
 
 import (
 	"fmt"
@@ -8,9 +8,10 @@ import (
 	proto "github.com/golang/protobuf/proto"
 )
 
-/* MsgAgent 消息代理是接收消息的IO
-   MsgCenter处理消息时会将消息代理带入，以便消息回复*/
-type MsgPeer interface {
+/* MsgServer 消息服务器是接收消息的IO
+   MsgCenter处理消息时会将消息服务器传入，以便消息回复
+	 这个接口只有一个用处，让服务器程序写游戏客户端测试代码能够使用msgcenter代码*/
+type MsgServer interface {
 	// Broadcast 服务器向客户端广播消息
 	Broadcast([]int32, interface{}) error
 	// Forward 向服务器或者客户端转发消息
@@ -21,7 +22,7 @@ type MsgPeer interface {
   int32 消息来源
   interface{} 消息本体
 	MsgAgent 消息代理*/
-type MsgHandler func(int32, interface{}, MsgPeer)
+type MsgHandler func(int32, interface{}, MsgServer)
 
 type msgInfo struct {
 	elem    reflect.Type
@@ -39,32 +40,27 @@ func NewMsgCenter() *MsgCenter {
 	return &MsgCenter{hash: make(map[string]int32), info: make(map[int32]msgInfo)}
 }
 
+func fnvhash(str string) int32 {
+	h := fnv.New32a()
+	h.Write([]byte(str))
+	return int32(h.Sum32())
+}
+
 /*Reg 消息注册
   msg 消息定义
   handler 消息处理函数*/
 func (mc *MsgCenter) Reg(msg interface{}, handler MsgHandler) {
 	name := reflect.TypeOf(msg).Elem().Name()
-	h := fnv.New32a()
-	_, err := h.Write([]byte(name))
-	if err != nil {
-		panic(name + "\n" + err.Error())
+	hash := fnvhash(name)
+	if info, ok := mc.info[hash]; ok {
+		panic(fmt.Errorf("Hash(%d) conflict %s %s", hash, name, info.elem.Name()))
 	}
-	hh := int32(h.Sum32())
-	if info, ok := mc.info[hh]; ok {
-		panic(fmt.Errorf("Hash(%d) conflict %s %s", hh, name, info.elem.Name()))
-	}
-	mc.info[hh] = msgInfo{reflect.TypeOf(msg).Elem(), handler}
-	mc.hash[name] = hh
+	mc.info[hash] = msgInfo{reflect.TypeOf(msg).Elem(), handler}
+	mc.hash[name] = hash
 }
 
 func WrapFMNoCheck(target int32, msg proto.Message) (*ForwardMsg, error) {
-	name := reflect.TypeOf(msg).Elem().Name()
-	h := fnv.New32a()
-	_, err := h.Write([]byte(name))
-	if err != nil {
-		return nil, err
-	}
-	hash := int32(h.Sum32())
+	hash := fnvhash(reflect.TypeOf(msg).Elem().Name())
 	buf, err := proto.Marshal(msg)
 	if err != nil {
 		return nil, err
@@ -108,7 +104,7 @@ func (mc *MsgCenter) WrapBM(targets []int32, msg proto.Message) (*BroadcastMsg, 
 
 /*Handle 转发消息处理函数
   fmsg 转发消息*/
-func (mc *MsgCenter) Handle(fmsg *ForwardMsg, from MsgPeer) error {
+func (mc *MsgCenter) Handle(fmsg *ForwardMsg, from MsgServer) error {
 	info, ok := mc.info[fmsg.Msg.Type]
 	if !ok {
 		return fmt.Errorf("unregistered message type %d", fmsg.Msg.Type)

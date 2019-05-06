@@ -1,8 +1,9 @@
-package agent
+package client
 
 import (
 	fmt "fmt"
-	"lemna/agent/rpc"
+	"lemna/agent"
+	"lemna/agent/arpc"
 	"lemna/logger"
 	"net"
 	"strconv"
@@ -15,24 +16,32 @@ import (
 // ClientService 代理服务，接受客户端连接，并验证
 //         将客户端消息转发给服务器并将服务器消息转发给客户端
 type ClientService struct {
-	addr       string         //代理地址
-	serverPool ServerPool     //服务器池
-	token      Token          //Token
-	clientmgr  *clientManager //客户端池
+	addr      string         //代理地址
+	token     Token          //Token
+	clientmgr *clientManager //客户端池
+	sp        agent.TargetPool
 }
 
 // NewClientService 新代理服务
-func NewClientService(addr string, serverPool ServerPool, t Token) *ClientService {
+func NewClientService(addr string, t Token) *ClientService {
 	cp := newClientMananger()
-	cp.SetServerPool(serverPool)
-	serverPool.SetClientPool(cp)
-	return &ClientService{addr: addr, serverPool: serverPool, token: t, clientmgr: cp}
+	return &ClientService{addr: addr, token: t, clientmgr: cp}
+}
+
+// GetClient 目标池接口实现
+func (cs *ClientService) GetTarget(cid int32) agent.Target {
+	return cs.clientmgr.getClient(cid)
+}
+
+// SetServerPool 目标池接口实现
+func (cs *ClientService) Bind(sp agent.TargetPool) {
+	cs.sp = sp
 }
 
 // Login rpc.ClientServer.Login接口实现
 //       根据token分配唯一sessionid，并将此ID通过消息头返回给客户端
 //       客户端调用Forward时应将此头返回给服务器
-func (cs *ClientService) Login(ctx context.Context, msg *rpc.LoginMsg) (*rpc.LoginMsg, error) {
+func (cs *ClientService) Login(ctx context.Context, msg *arpc.LoginMsg) (*arpc.LoginMsg, error) {
 	md, ok := metadata.FromIncomingContext(ctx)
 	if !ok {
 		return nil, fmt.Errorf("invalid rpc,no metadata")
@@ -57,7 +66,7 @@ func (cs *ClientService) Login(ctx context.Context, msg *rpc.LoginMsg) (*rpc.Log
 
 // Forward rpc.ClientServer.Forward接口实现
 //         会验证消息头的session数据是否有效
-func (cs *ClientService) Forward(stream rpc.Client_ForwardServer) error {
+func (cs *ClientService) Forward(stream arpc.Client_ForwardServer) error {
 	md, ok := metadata.FromIncomingContext(stream.Context())
 	if !ok {
 		return fmt.Errorf("invalid rpc,no metadata")
@@ -75,16 +84,10 @@ func (cs *ClientService) Forward(stream rpc.Client_ForwardServer) error {
 	//根据sessionid从client管理器初始化一个Client
 	client, err := cs.clientmgr.newClient(stream, uid)
 	if err == nil {
-		err = client.Run(cs.clientmgr.serverPool)
-		cs.clientmgr.delClient(client.id)
+		err = agent.CtoS(client, cs.sp)
+		cs.clientmgr.delClient(uid)
 		//通知服务器用户失效
-		logout, err := rpc.WrapFMNoCheck(client.id, &ClientLogoutMsg{})
-		if err == nil {
-			for _, server := range client.cache {
-				logger.Debug(logout)
-				server.rpcc.Send(logout)
-			}
-		}
+		client.SayBye()
 	}
 	return err
 }
@@ -96,6 +99,6 @@ func (cs *ClientService) Run() error {
 		return err
 	}
 	s := grpc.NewServer()
-	rpc.RegisterClientServer(s, cs)
+	arpc.RegisterClientServer(s, cs)
 	return s.Serve(lis)
 }

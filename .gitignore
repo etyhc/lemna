@@ -1,3 +1,4 @@
 rpcagent
 contentrpcserver
 go.sum
+*.exe

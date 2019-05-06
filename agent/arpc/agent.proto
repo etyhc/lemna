@@ -1,5 +1,5 @@
 syntax = "proto3";
-package rpc;
+package arpc;
 
 service Client {
   rpc Login(LoginMsg) returns (LoginMsg) {}
@@ -15,10 +15,11 @@ message LoginMsg {
 }
 
 message RawMsg {
-  int32 type =1;
-  bytes raw = 2;
+  int32 type =1;//消息ID，是raw消息的名字的hash值,采用hash算法是32-bit FNV-1a
+  bytes raw = 2;//proto消息的marshal编码
 }
 
+//服务器广播消息，代理服务器会将此消息从新封装成Forward消息转给客户端
 message BroadcastMsg {
   repeated int32 targets = 1;
   RawMsg msg = 2;

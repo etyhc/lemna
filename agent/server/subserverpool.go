@@ -1,9 +1,9 @@
-package impl
+package server
 
 import (
 	"lemna/agent"
-	"lemna/agent/rpc"
-	contentrpc "lemna/content/rpc"
+	"lemna/agent/arpc"
+	"lemna/content/crpc"
 	"lemna/logger"
 )
 
@@ -12,19 +12,20 @@ import (
 //              如果是有状态服务器，那么服务器应设置成SERVERSCHENIL,不让代理服务器进行调度
 //              并自己实现有状态调度器，与客户端协调状态
 type SubServerPool struct {
-	servers    map[int32]map[string]*agent.Server
-	clientPool agent.ClientPool
+	servers map[int32]map[string]*Server
+	cp      agent.TargetPool
+	addr    string
 }
 
-func schedule(servers map[string]*agent.Server, client *agent.Client) *agent.Server {
-	var ret *agent.Server
+func schedule(servers map[string]*Server) *Server {
+	var ret *Server
 	for _, server := range servers {
 		switch server.Info.Sche {
-		case agent.SERVERSCHEROUND:
+		case SERVERSCHEROUND:
 			if ret == nil || ret.Round > server.Round {
 				ret = server
 			}
-		case agent.SERVERSCHELOAD:
+		case SERVERSCHELOAD:
 			if ret == nil || ret.Info.Load > server.Info.Load {
 				ret = server
 			}
@@ -36,17 +37,21 @@ func schedule(servers map[string]*agent.Server, client *agent.Client) *agent.Ser
 	return ret
 }
 
+func NewSubServerPool(addr string) *SubServerPool {
+	return &SubServerPool{servers: make(map[int32]map[string]*Server), addr: addr}
+}
+
 //GetServer 服务器池接口实现
-func (ssp *SubServerPool) GetServer(target int32, client *agent.Client) *agent.Server {
-	return schedule(ssp.servers[target], client)
+func (ssp *SubServerPool) GetTarget(target int32) agent.Target {
+	return schedule(ssp.servers[target])
 }
 
 //SetClientPool 服务器池接口实现
-func (ssp *SubServerPool) SetClientPool(cp agent.ClientPool) {
-	ssp.clientPool = cp
+func (ssp *SubServerPool) Bind(cp agent.TargetPool) {
+	ssp.cp = cp
 }
 
-func (ssp *SubServerPool) refreshServer(info *agent.ServerInfo) bool {
+func (ssp *SubServerPool) refreshServer(info *ServerInfo) bool {
 	if servers, ok := ssp.servers[info.Type]; ok {
 		if s, ok := servers[info.Addr]; ok {
 			s.Info = info
@@ -56,36 +61,35 @@ func (ssp *SubServerPool) refreshServer(info *agent.ServerInfo) bool {
 	return false
 }
 
-func (ssp *SubServerPool) registerServer(info *agent.ServerInfo) {
+func (ssp *SubServerPool) registerServer(info *ServerInfo) {
 	go func() {
-		c := rpc.NewClient(info.Addr, info.Type)
+		c := arpc.NewClient(info.Addr, info.Type)
 		err := c.Init()
 		if err == nil {
 			if _, ok := ssp.servers[c.TypeID()]; !ok {
-				ssp.servers[c.TypeID()] = make(map[string]*agent.Server)
+				ssp.servers[c.TypeID()] = make(map[string]*Server)
 			}
-			s := agent.NewServer(c, info)
+			s := NewServer(c, info)
 			ssp.servers[info.Type][info.Addr] = s
 			logger.Infof("%s(%d) is running", info.Addr, info.Type)
-			err = s.Run(ssp.clientPool)
+			err = agent.StoC(s, ssp.cp)
 			delete(ssp.servers[info.Type], info.Addr)
 		}
 		logger.Error(err)
 	}()
 }
 
-//SubscribeServer 从配置频道服务器订阅服务器信息
-//                订阅到服务器后链接注册服务器，如果已注册更新服务器信息
-func (ssp *SubServerPool) SubscribeServer(addr string) error {
-	ssp.servers = make(map[int32]map[string]*agent.Server)
-	finder := contentrpc.Channel{Addr: addr}
-	ch, err := finder.Subscribe(&agent.ServerInfo{})
+//Start 从配置频道服务器订阅服务器信息
+//      订阅到服务器后链接注册服务器，如果已注册更新服务器信息
+func (ssp *SubServerPool) Run() error {
+	finder := crpc.Channel{Addr: ssp.addr}
+	ch, err := finder.Subscribe(&ServerInfo{})
 	if err != nil {
 		return err
 	}
 	go func() {
 		for {
-			info, ok := (<-ch).(*agent.ServerInfo)
+			info, ok := (<-ch).(*ServerInfo)
 			if !ok {
 				logger.Debug("subscribe closed")
 				return

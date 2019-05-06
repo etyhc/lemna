@@ -1,32 +1,21 @@
-package agent
+package client
 
 import (
 	fmt "fmt"
-	"lemna/agent/rpc"
+	"lemna/agent/arpc"
 	"sync"
 )
 
 type clientManager struct {
-	clients    map[int32]*Client
-	serverPool ServerPool
-	mu         sync.Mutex
+	clients map[int32]*Client
+	mu      sync.Mutex
 }
 
 func newClientMananger() *clientManager {
 	return &clientManager{clients: make(map[int32]*Client)}
 }
 
-// GetClient 目标池接口实现
-func (cm *clientManager) GetClient(cid int32, s *Server) *Client {
-	return cm.getClient(cid)
-}
-
-// SetServerPool 目标池接口实现
-func (cm *clientManager) SetServerPool(sp ServerPool) {
-	cm.serverPool = sp
-}
-
-func (cm *clientManager) newClient(s rpc.Client_ForwardServer, id int32) (*Client, error) {
+func (cm *clientManager) newClient(s arpc.Client_ForwardServer, id int32) (*Client, error) {
 	cm.mu.Lock()
 	defer cm.mu.Unlock()
 	_, ok := cm.clients[id]
@@ -41,7 +30,7 @@ func (cm *clientManager) getClient(id int32) *Client {
 	cm.mu.Lock()
 	defer cm.mu.Unlock()
 	ret, ok := cm.clients[id]
-	if ok && ret.stream != nil {
+	if ok {
 		return ret
 	}
 	return nil

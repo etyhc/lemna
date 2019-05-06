@@ -18,47 +18,87 @@ var _ = math.Inf
 // proto package needs to be updated.
 const _ = proto.ProtoPackageIsVersion2 // please upgrade the proto package
 
-type ClientLogoutMsg struct {
+type ClientByeMsg struct {
+	Cid                  int32    `protobuf:"varint,1,opt,name=cid,proto3" json:"cid,omitempty"`
 	XXX_NoUnkeyedLiteral struct{} `json:"-"`
 	XXX_unrecognized     []byte   `json:"-"`
 	XXX_sizecache        int32    `json:"-"`
 }
 
-func (m *ClientLogoutMsg) Reset()         { *m = ClientLogoutMsg{} }
-func (m *ClientLogoutMsg) String() string { return proto.CompactTextString(m) }
-func (*ClientLogoutMsg) ProtoMessage()    {}
-func (*ClientLogoutMsg) Descriptor() ([]byte, []int) {
-	return fileDescriptor_message_e20842e418ee7a99, []int{0}
+func (m *ClientByeMsg) Reset()         { *m = ClientByeMsg{} }
+func (m *ClientByeMsg) String() string { return proto.CompactTextString(m) }
+func (*ClientByeMsg) ProtoMessage()    {}
+func (*ClientByeMsg) Descriptor() ([]byte, []int) {
+	return fileDescriptor_message_20f01004b72e6596, []int{0}
 }
-func (m *ClientLogoutMsg) XXX_Unmarshal(b []byte) error {
-	return xxx_messageInfo_ClientLogoutMsg.Unmarshal(m, b)
+func (m *ClientByeMsg) XXX_Unmarshal(b []byte) error {
+	return xxx_messageInfo_ClientByeMsg.Unmarshal(m, b)
 }
-func (m *ClientLogoutMsg) XXX_Marshal(b []byte, deterministic bool) ([]byte, error) {
-	return xxx_messageInfo_ClientLogoutMsg.Marshal(b, m, deterministic)
+func (m *ClientByeMsg) XXX_Marshal(b []byte, deterministic bool) ([]byte, error) {
+	return xxx_messageInfo_ClientByeMsg.Marshal(b, m, deterministic)
 }
-func (dst *ClientLogoutMsg) XXX_Merge(src proto.Message) {
-	xxx_messageInfo_ClientLogoutMsg.Merge(dst, src)
+func (dst *ClientByeMsg) XXX_Merge(src proto.Message) {
+	xxx_messageInfo_ClientByeMsg.Merge(dst, src)
 }
-func (m *ClientLogoutMsg) XXX_Size() int {
-	return xxx_messageInfo_ClientLogoutMsg.Size(m)
+func (m *ClientByeMsg) XXX_Size() int {
+	return xxx_messageInfo_ClientByeMsg.Size(m)
 }
-func (m *ClientLogoutMsg) XXX_DiscardUnknown() {
-	xxx_messageInfo_ClientLogoutMsg.DiscardUnknown(m)
+func (m *ClientByeMsg) XXX_DiscardUnknown() {
+	xxx_messageInfo_ClientByeMsg.DiscardUnknown(m)
 }
 
-var xxx_messageInfo_ClientLogoutMsg proto.InternalMessageInfo
+var xxx_messageInfo_ClientByeMsg proto.InternalMessageInfo
+
+func (m *ClientByeMsg) GetCid() int32 {
+	if m != nil {
+		return m.Cid
+	}
+	return 0
+}
+
+type HelloMsg struct {
+	XXX_NoUnkeyedLiteral struct{} `json:"-"`
+	XXX_unrecognized     []byte   `json:"-"`
+	XXX_sizecache        int32    `json:"-"`
+}
+
+func (m *HelloMsg) Reset()         { *m = HelloMsg{} }
+func (m *HelloMsg) String() string { return proto.CompactTextString(m) }
+func (*HelloMsg) ProtoMessage()    {}
+func (*HelloMsg) Descriptor() ([]byte, []int) {
+	return fileDescriptor_message_20f01004b72e6596, []int{1}
+}
+func (m *HelloMsg) XXX_Unmarshal(b []byte) error {
+	return xxx_messageInfo_HelloMsg.Unmarshal(m, b)
+}
+func (m *HelloMsg) XXX_Marshal(b []byte, deterministic bool) ([]byte, error) {
+	return xxx_messageInfo_HelloMsg.Marshal(b, m, deterministic)
+}
+func (dst *HelloMsg) XXX_Merge(src proto.Message) {
+	xxx_messageInfo_HelloMsg.Merge(dst, src)
+}
+func (m *HelloMsg) XXX_Size() int {
+	return xxx_messageInfo_HelloMsg.Size(m)
+}
+func (m *HelloMsg) XXX_DiscardUnknown() {
+	xxx_messageInfo_HelloMsg.DiscardUnknown(m)
+}
+
+var xxx_messageInfo_HelloMsg proto.InternalMessageInfo
 
 func init() {
-	proto.RegisterType((*ClientLogoutMsg)(nil), "agent.ClientLogoutMsg")
+	proto.RegisterType((*ClientByeMsg)(nil), "agent.ClientByeMsg")
+	proto.RegisterType((*HelloMsg)(nil), "agent.HelloMsg")
 }
 
-func init() { proto.RegisterFile("message.proto", fileDescriptor_message_e20842e418ee7a99) }
+func init() { proto.RegisterFile("message.proto", fileDescriptor_message_20f01004b72e6596) }
 
-var fileDescriptor_message_e20842e418ee7a99 = []byte{
-	// 70 bytes of a gzipped FileDescriptorProto
+var fileDescriptor_message_20f01004b72e6596 = []byte{
+	// 95 bytes of a gzipped FileDescriptorProto
 	0x1f, 0x8b, 0x08, 0x00, 0x00, 0x00, 0x00, 0x00, 0x02, 0xff, 0xe2, 0xe2, 0xcd, 0x4d, 0x2d, 0x2e,
 	0x4e, 0x4c, 0x4f, 0xd5, 0x2b, 0x28, 0xca, 0x2f, 0xc9, 0x17, 0x62, 0x4d, 0x4c, 0x4f, 0xcd, 0x2b,
-	0x51, 0x12, 0xe4, 0xe2, 0x77, 0xce, 0xc9, 0x4c, 0xcd, 0x2b, 0xf1, 0xc9, 0x4f, 0xcf, 0x2f, 0x2d,
-	0xf1, 0x2d, 0x4e, 0x4f, 0x62, 0x03, 0x2b, 0x30, 0x06, 0x04, 0x00, 0x00, 0xff, 0xff, 0xc7, 0x7f,
-	0x2b, 0x6e, 0x31, 0x00, 0x00, 0x00,
+	0x51, 0x52, 0xe0, 0xe2, 0x71, 0xce, 0xc9, 0x4c, 0xcd, 0x2b, 0x71, 0xaa, 0x4c, 0xf5, 0x2d, 0x4e,
+	0x17, 0x12, 0xe0, 0x62, 0x4e, 0xce, 0x4c, 0x91, 0x60, 0x54, 0x60, 0xd4, 0x60, 0x0d, 0x02, 0x31,
+	0x95, 0xb8, 0xb8, 0x38, 0x3c, 0x52, 0x73, 0x72, 0xf2, 0x7d, 0x8b, 0xd3, 0x93, 0xd8, 0xc0, 0x7a,
+	0x8d, 0x01, 0x01, 0x00, 0x00, 0xff, 0xff, 0x5d, 0xaf, 0x4a, 0x7a, 0x4c, 0x00, 0x00, 0x00,
 }

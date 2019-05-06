@@ -1,5 +1,5 @@
 syntax = "proto3";
-package rpc;
+package crpc;
 
 service Channel {
   rpc Publish(ContentMsg)returns (ContentMsg){}
