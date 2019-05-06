@@ -4,17 +4,17 @@ import (
 	fmt "fmt"
 
 	proto "github.com/golang/protobuf/proto"
-	"google.golang.org/grpc/peer"
 )
 
 type Server struct {
 	typeid int32
 	stream Server_ForwardServer
 	mc     *MsgCenter //消息中心
+	id     uint32
 }
 
-func NewServer(typeid int32, stream Server_ForwardServer, mc *MsgCenter) *Server {
-	return &Server{typeid: typeid, stream: stream, mc: mc}
+func NewServer(typeid int32, stream Server_ForwardServer, mc *MsgCenter, id uint32) *Server {
+	return &Server{typeid: typeid, stream: stream, mc: mc, id: id}
 }
 
 func (s *Server) Broadcast(targets []int32, msg interface{}) error {
@@ -33,12 +33,8 @@ func (s *Server) Forward(target int32, msg interface{}) error {
 	return s.stream.Send(bmsg)
 }
 
-func (s *Server) GetPeerAddr() (string, bool) {
-	peer, ok := peer.FromContext(s.stream.Context())
-	if ok {
-		return peer.Addr.String(), true
-	}
-	return "", false
+func (s *Server) ID() uint32 {
+	return s.id
 }
 
 func (s *Server) TypeID() int32 {

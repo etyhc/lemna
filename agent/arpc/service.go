@@ -1,33 +1,37 @@
 package arpc
 
 import (
+	fmt "fmt"
 	"lemna/logger"
 	"net"
+	"strconv"
 
 	"google.golang.org/grpc"
+	"google.golang.org/grpc/metadata"
 )
 
 type ServerIndex struct {
-	index map[string]*Server
+	index map[uint32]*Server
 }
 
 func NewServerIndex() *ServerIndex {
-	return &ServerIndex{index: make(map[string]*Server)}
+	return &ServerIndex{index: make(map[uint32]*Server)}
 }
 
-func (si *ServerIndex) get(addr string) *Server {
-	return si.index[addr]
+func (si *ServerIndex) get(id uint32) *Server {
+	return si.index[id]
 }
 
-func (si *ServerIndex) put(s *Server) {
-	if addr, ok := s.GetPeerAddr(); ok {
-		si.index[addr] = s
+func (si *ServerIndex) put(s *Server) error {
+	if _, ok := si.index[s.ID()]; ok {
+		return fmt.Errorf("clientid<%d> conflcit", s.ID())
 	}
+	si.index[s.ID()] = s
+	return nil
 }
+
 func (si *ServerIndex) remove(s *Server) {
-	if addr, ok := s.GetPeerAddr(); ok {
-		delete(si.index, addr)
-	}
+	delete(si.index, s.ID())
 }
 
 // ServerService rpc服务器端封装，用于服务器开发
@@ -38,14 +42,30 @@ type ServerService struct {
 	si        *ServerIndex
 }
 
-func (ss *ServerService) Get(addr string) *Server {
-	return ss.si.get(addr)
+func (ss *ServerService) Get(id uint32) *Server {
+	return ss.si.get(id)
 }
 
 // Forward rpc.Forward调用实现,解析转发来的消息
 func (ss *ServerService) Forward(stream Server_ForwardServer) error {
-	server := NewServer(ss.Typeid, stream, ss.Msgcenter)
-	ss.si.put(server)
+	md, ok := metadata.FromIncomingContext(stream.Context())
+	if !ok {
+		return fmt.Errorf("invalid rpc,no metadata")
+	}
+	clientid, ok := md["clientid"]
+	if !ok {
+		return fmt.Errorf("invalid client,no clientid")
+	}
+	//获得clientid
+	cid, err := strconv.Atoi(clientid[0])
+	if err != nil {
+		return err
+	}
+	server := NewServer(ss.Typeid, stream, ss.Msgcenter, uint32(cid))
+	err = ss.si.put(server)
+	if err != nil {
+		return err
+	}
 	defer ss.si.remove(server)
 	for {
 		in, err := server.stream.Recv()

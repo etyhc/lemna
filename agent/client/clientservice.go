@@ -30,7 +30,11 @@ func NewClientService(addr string, t Token) *ClientService {
 
 // GetClient 目标池接口实现
 func (cs *ClientService) GetTarget(cid int32) agent.Target {
-	return cs.clientmgr.getClient(cid)
+	ret := cs.clientmgr.getClient(cid)
+	if ret != nil {
+		return ret
+	}
+	return nil
 }
 
 // SetServerPool 目标池接口实现

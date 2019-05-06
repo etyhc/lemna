@@ -38,12 +38,14 @@ func CtoS(src CTarget, pool TargetPool) error {
 
 		dest := src.GetCache(fmsg.Target)
 		if dest == nil {
-			dest := pool.GetTarget(fmsg.Target)
+			dest = pool.GetTarget(fmsg.Target)
 			if dest == nil {
 				logger.Errorf("not find server<%d>", fmsg.Target)
 				continue
 			}
+			logger.Debug("===", dest)
 		}
+		logger.Debug("---", dest)
 
 		//转发指令
 		fmsg.Target = src.ID()

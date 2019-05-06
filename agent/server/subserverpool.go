@@ -43,7 +43,11 @@ func NewSubServerPool(addr string) *SubServerPool {
 
 //GetServer 服务器池接口实现
 func (ssp *SubServerPool) GetTarget(target int32) agent.Target {
-	return schedule(ssp.servers[target])
+	ret := schedule(ssp.servers[target])
+	if ret != nil {
+		return ret
+	}
+	return nil
 }
 
 //SetClientPool 服务器池接口实现
@@ -63,7 +67,7 @@ func (ssp *SubServerPool) refreshServer(info *ServerInfo) bool {
 
 func (ssp *SubServerPool) registerServer(info *ServerInfo) {
 	go func() {
-		c := arpc.NewClient(info.Addr, info.Type)
+		c := arpc.NewClient(info.Addr, info.Type, agent.ServiceID)
 		err := c.Init()
 		if err == nil {
 			if _, ok := ssp.servers[c.TypeID()]; !ok {

@@ -10,12 +10,14 @@ import (
 
 /* MsgServer 消息服务器是接收消息的IO
    MsgCenter处理消息时会将消息服务器传入，以便消息回复
-	 这个接口只有一个用处，让服务器程序写游戏客户端测试代码能够使用msgcenter代码*/
+	 这个接口只有一个用处，让服务器程序写游戏客户端测试代码能够使用msgcenter代码
+	 否则可以使用*Server*/
 type MsgServer interface {
 	// Broadcast 服务器向客户端广播消息
 	Broadcast([]int32, interface{}) error
 	// Forward 向服务器或者客户端转发消息
 	Forward(int32, interface{}) error
+	ID() uint32
 }
 
 /*MsgHandler 是个消息回调函数，需要实现，并注册到MsgCenter
