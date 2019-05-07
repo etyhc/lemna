@@ -36,14 +36,8 @@ func (c *Client) Send(msg *arpc.ForwardMsg) error {
 }
 
 func (c *Client) SayBye() {
-	logout, err := arpc.WrapFMNoCheck(c.id, &agent.ClientByeMsg{})
-	if err == nil {
-		for _, server := range c.cache {
-			logger.Debug(logout)
-			server.Send(logout)
-		}
-	} else {
-		logger.Error(err)
+	for _, server := range c.cache {
+		agent.InvalidTarget(server, c.id)
 	}
 }
 func (c *Client) Recv() (*arpc.ForwardMsg, error) {

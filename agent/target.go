@@ -29,6 +29,13 @@ type TargetPool interface {
 	Run() error
 }
 
+func InvalidTarget(src Target, dest int32) {
+	itm, err := arpc.WrapFMNoCheck(dest, &InvalidTargetMsg{})
+	if err == nil {
+		src.Send(itm)
+	}
+}
+
 func CtoS(src CTarget, pool TargetPool) error {
 	for {
 		fmsg, err := src.Recv()
@@ -40,18 +47,18 @@ func CtoS(src CTarget, pool TargetPool) error {
 		if dest == nil {
 			dest = pool.GetTarget(fmsg.Target)
 			if dest == nil {
+				InvalidTarget(src, fmsg.Target)
 				logger.Errorf("not find server<%d>", fmsg.Target)
 				continue
 			}
-			logger.Debug("===", dest)
 		}
-		logger.Debug("---", dest)
 
 		//转发指令
 		fmsg.Target = src.ID()
 		err = dest.Send(fmsg)
 		//转发失败
 		if err != nil {
+			InvalidTarget(src, fmsg.Target)
 			logger.Error(dest.Error(err))
 			src.Uncache(dest.ID())
 			continue
@@ -70,6 +77,7 @@ func StoC(src STarget, pool TargetPool) error {
 		for _, cid := range bmsg.Targets {
 			c := pool.GetTarget(cid).(CTarget)
 			if c == nil {
+				InvalidTarget(src, cid)
 				logger.Errorf("not find client<%d>", cid)
 				continue
 			}
@@ -78,6 +86,7 @@ func StoC(src STarget, pool TargetPool) error {
 			err = c.Send(&arpc.ForwardMsg{Target: src.ID(), Msg: bmsg.Msg})
 			//转发失败
 			if err != nil {
+				InvalidTarget(src, cid)
 				logger.Error(c.Error(err))
 				c.Uncache(src.ID())
 			} else {

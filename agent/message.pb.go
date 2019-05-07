@@ -18,56 +18,47 @@ var _ = math.Inf
 // proto package needs to be updated.
 const _ = proto.ProtoPackageIsVersion2 // please upgrade the proto package
 
-type ClientByeMsg struct {
-	Cid                  int32    `protobuf:"varint,1,opt,name=cid,proto3" json:"cid,omitempty"`
+type InvalidTargetMsg struct {
 	XXX_NoUnkeyedLiteral struct{} `json:"-"`
 	XXX_unrecognized     []byte   `json:"-"`
 	XXX_sizecache        int32    `json:"-"`
 }
 
-func (m *ClientByeMsg) Reset()         { *m = ClientByeMsg{} }
-func (m *ClientByeMsg) String() string { return proto.CompactTextString(m) }
-func (*ClientByeMsg) ProtoMessage()    {}
-func (*ClientByeMsg) Descriptor() ([]byte, []int) {
-	return fileDescriptor_message_e7512afdca296b28, []int{0}
+func (m *InvalidTargetMsg) Reset()         { *m = InvalidTargetMsg{} }
+func (m *InvalidTargetMsg) String() string { return proto.CompactTextString(m) }
+func (*InvalidTargetMsg) ProtoMessage()    {}
+func (*InvalidTargetMsg) Descriptor() ([]byte, []int) {
+	return fileDescriptor_message_b9ac102e6407d358, []int{0}
 }
-func (m *ClientByeMsg) XXX_Unmarshal(b []byte) error {
-	return xxx_messageInfo_ClientByeMsg.Unmarshal(m, b)
+func (m *InvalidTargetMsg) XXX_Unmarshal(b []byte) error {
+	return xxx_messageInfo_InvalidTargetMsg.Unmarshal(m, b)
 }
-func (m *ClientByeMsg) XXX_Marshal(b []byte, deterministic bool) ([]byte, error) {
-	return xxx_messageInfo_ClientByeMsg.Marshal(b, m, deterministic)
+func (m *InvalidTargetMsg) XXX_Marshal(b []byte, deterministic bool) ([]byte, error) {
+	return xxx_messageInfo_InvalidTargetMsg.Marshal(b, m, deterministic)
 }
-func (dst *ClientByeMsg) XXX_Merge(src proto.Message) {
-	xxx_messageInfo_ClientByeMsg.Merge(dst, src)
+func (dst *InvalidTargetMsg) XXX_Merge(src proto.Message) {
+	xxx_messageInfo_InvalidTargetMsg.Merge(dst, src)
 }
-func (m *ClientByeMsg) XXX_Size() int {
-	return xxx_messageInfo_ClientByeMsg.Size(m)
+func (m *InvalidTargetMsg) XXX_Size() int {
+	return xxx_messageInfo_InvalidTargetMsg.Size(m)
 }
-func (m *ClientByeMsg) XXX_DiscardUnknown() {
-	xxx_messageInfo_ClientByeMsg.DiscardUnknown(m)
+func (m *InvalidTargetMsg) XXX_DiscardUnknown() {
+	xxx_messageInfo_InvalidTargetMsg.DiscardUnknown(m)
 }
 
-var xxx_messageInfo_ClientByeMsg proto.InternalMessageInfo
-
-func (m *ClientByeMsg) GetCid() int32 {
-	if m != nil {
-		return m.Cid
-	}
-	return 0
-}
+var xxx_messageInfo_InvalidTargetMsg proto.InternalMessageInfo
 
 func init() {
-	proto.RegisterType((*ClientByeMsg)(nil), "agent.ClientByeMsg")
+	proto.RegisterType((*InvalidTargetMsg)(nil), "agent.InvalidTargetMsg")
 }
 
-func init() { proto.RegisterFile("message.proto", fileDescriptor_message_e7512afdca296b28) }
+func init() { proto.RegisterFile("message.proto", fileDescriptor_message_b9ac102e6407d358) }
 
-var fileDescriptor_message_e7512afdca296b28 = []byte{
-	// 83 bytes of a gzipped FileDescriptorProto
+var fileDescriptor_message_b9ac102e6407d358 = []byte{
+	// 71 bytes of a gzipped FileDescriptorProto
 	0x1f, 0x8b, 0x08, 0x00, 0x00, 0x00, 0x00, 0x00, 0x02, 0xff, 0xe2, 0xe2, 0xcd, 0x4d, 0x2d, 0x2e,
 	0x4e, 0x4c, 0x4f, 0xd5, 0x2b, 0x28, 0xca, 0x2f, 0xc9, 0x17, 0x62, 0x4d, 0x4c, 0x4f, 0xcd, 0x2b,
-	0x51, 0x52, 0xe0, 0xe2, 0x71, 0xce, 0xc9, 0x4c, 0xcd, 0x2b, 0x71, 0xaa, 0x4c, 0xf5, 0x2d, 0x4e,
-	0x17, 0x12, 0xe0, 0x62, 0x4e, 0xce, 0x4c, 0x91, 0x60, 0x54, 0x60, 0xd4, 0x60, 0x0d, 0x02, 0x31,
-	0x93, 0xd8, 0xc0, 0xea, 0x8d, 0x01, 0x01, 0x00, 0x00, 0xff, 0xff, 0xcd, 0xd9, 0x48, 0x36, 0x40,
-	0x00, 0x00, 0x00,
+	0x51, 0x12, 0xe2, 0x12, 0xf0, 0xcc, 0x2b, 0x4b, 0xcc, 0xc9, 0x4c, 0x09, 0x49, 0x2c, 0x4a, 0x4f,
+	0x2d, 0xf1, 0x2d, 0x4e, 0x4f, 0x62, 0x03, 0xab, 0x30, 0x06, 0x04, 0x00, 0x00, 0xff, 0xff, 0xeb,
+	0xaa, 0xa2, 0xd5, 0x32, 0x00, 0x00, 0x00,
 }
