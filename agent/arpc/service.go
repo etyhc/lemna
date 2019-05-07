@@ -84,7 +84,6 @@ func (ss *ServerService) Forward(stream Server_ForwardServer) error {
 // Run 运行rpc服务,阻塞的
 func (ss *ServerService) Run() error {
 	lis, err := net.Listen("tcp", ss.Addr)
-	logger.Debug(lis.Addr())
 	ss.si = NewServerIndex()
 	if err == nil {
 		rpcs := grpc.NewServer()
