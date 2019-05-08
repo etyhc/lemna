@@ -13,11 +13,12 @@ import (
 //              如果是有状态服务器，那么服务器应设置成SERVERSCHENIL,不让代理服务器进行调度
 //              并自己实现有状态调度器，与客户端协调状态
 type SubServerPool struct {
-	servers map[int32]map[string]*Server
-	cp      agent.TargetPool
-	addr    string
+	servers map[int32]map[string]*Server //所有订阅并连接的服务器
+	cp      agent.TargetPool             //客户端池
+	addr    string                       //订阅服务器地址
 }
 
+// schedule 根据服务器信息调度服务器
 func schedule(servers map[string]*Server) *Server {
 	var ret *Server
 	for _, server := range servers {
@@ -38,6 +39,7 @@ func schedule(servers map[string]*Server) *Server {
 	return ret
 }
 
+// NewSubServerPool 新订阅服务器池
 func NewSubServerPool(addr string) *SubServerPool {
 	return &SubServerPool{servers: make(map[int32]map[string]*Server), addr: addr}
 }
@@ -56,6 +58,8 @@ func (ssp *SubServerPool) Bind(cp agent.TargetPool) {
 	ssp.cp = cp
 }
 
+// refreshServer 刷新服务器信息
+//               如果已经有服务器，更新服务器信息，返回true，否则返回false
 func (ssp *SubServerPool) refreshServer(info *ServerInfo) bool {
 	if servers, ok := ssp.servers[info.Type]; ok {
 		if s, ok := servers[info.Addr]; ok {
@@ -66,6 +70,8 @@ func (ssp *SubServerPool) refreshServer(info *ServerInfo) bool {
 	return false
 }
 
+// registerServer 注册服务器
+//                根据服务器信息，连接服务器,并待用服务器转发函数
 func (ssp *SubServerPool) registerServer(info *ServerInfo) {
 	go func() {
 		c := arpc.NewClient(info.Addr, info.Type, agent.ServiceID)
@@ -84,8 +90,8 @@ func (ssp *SubServerPool) registerServer(info *ServerInfo) {
 	}()
 }
 
-//Start 从配置频道服务器订阅服务器信息
-//      订阅到服务器后链接注册服务器，如果已注册更新服务器信息
+// Run 从配置频道服务器订阅服务器信息
+//     订阅到服务器后链接注册服务器，如果已注册更新服务器信息
 func (ssp *SubServerPool) Run() error {
 	finder := crpc.Channel{Addr: ssp.addr}
 	ch, err := finder.Subscribe(&ServerInfo{})

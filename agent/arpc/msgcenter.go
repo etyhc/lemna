@@ -8,23 +8,24 @@ import (
 	proto "github.com/golang/protobuf/proto"
 )
 
-/* MsgServer 消息服务器是接收消息的IO
-   MsgCenter处理消息时会将消息服务器传入，以便消息回复
-	 这个接口只有一个用处，让服务器程序写游戏客户端测试代码能够使用msgcenter代码
-	 否则可以使用*Server*/
-type MsgServer interface {
+//  MsgStream 消息流，用于接收和发送消息
+//            MsgCenter处理消息时会将消息流代入消息回调函数，以便消息回复.
+//          	这个接口只有一个用处，让服务器程序写游戏客户端测试代码能够复用msgcenter代码
+//            否则可以使用*Server
+type MsgStream interface {
 	// Broadcast 服务器向客户端广播消息
 	Broadcast([]int32, interface{}) error
 	// Forward 向服务器或者客户端转发消息
 	Forward(int32, interface{}) error
+	// ID 消息流唯一ID
 	ID() uint32
 }
 
-/*MsgHandler 是个消息回调函数，需要实现，并注册到MsgCenter
-  int32 消息来源
-  interface{} 消息本体
-	MsgServer 消息来源流，用于回复*/
-type MsgHandler func(int32, interface{}, MsgServer)
+// MsgHandler 是个消息回调函数，需要实现，并注册到MsgCenter
+//      int32 消息来源
+//  interface 消息本体
+//  MsgServer 消息来源流，用于回复
+type MsgHandler func(int32, interface{}, MsgStream)
 
 type msgInfo struct {
 	elem    reflect.Type
@@ -48,9 +49,9 @@ func fnvhash(str string) int32 {
 	return int32(h.Sum32())
 }
 
-/*Reg 消息注册
-  msg 消息定义
-  handler 消息处理函数*/
+// Reg 消息注册
+//      msg 被注册的消息
+//  handler 消息处理函数
 func (mc *MsgCenter) Reg(msg interface{}, handler MsgHandler) {
 	name := reflect.TypeOf(msg).Elem().Name()
 	hash := fnvhash(name)
@@ -61,9 +62,9 @@ func (mc *MsgCenter) Reg(msg interface{}, handler MsgHandler) {
 	mc.hash[name] = hash
 }
 
-// WrapFMNoCheck 将消息封装成转发消息,无需注册
+// WrapFMNoCheck 将消息封装成转发消息,无需提前注册此消息
 //        target 转发目标
-//           msg 被封装消息
+//           msg 被封装的消息
 func WrapFMNoCheck(target int32, msg proto.Message) (*ForwardMsg, error) {
 	hash := fnvhash(reflect.TypeOf(msg).Elem().Name())
 	buf, err := proto.Marshal(msg)
@@ -85,9 +86,9 @@ func (mc *MsgCenter) wrapRaw(msg proto.Message) (*RawMsg, error) {
 	return &RawMsg{Type: hash, Raw: buf}, nil
 }
 
-// WrapFM 将消息封装为转发消息,未注册消息封装会失败
-// target 转发目标
-//    msg 被编码的消息
+// WrapFM 将消息封装为转发消息,此消息需提前注册
+//  target 转发目标
+//     msg 被转发的消息
 func (mc *MsgCenter) WrapFM(target int32, msg proto.Message) (*ForwardMsg, error) {
 	raw, err := mc.wrapRaw(msg)
 	if err == nil {
@@ -96,9 +97,9 @@ func (mc *MsgCenter) WrapFM(target int32, msg proto.Message) (*ForwardMsg, error
 	return nil, err
 }
 
-//  WrapBM 将消息封装为广播消息,未注册消息封装会失败
-// targets 转发目标数组
-//     msg 被编码的消息
+// WrapBM 将消息封装为广播消息,此消息需提前注册
+//  targets 转发目标切片
+//      msg 被广播的消息
 func (mc *MsgCenter) WrapBM(targets []int32, msg proto.Message) (*BroadcastMsg, error) {
 	raw, err := mc.wrapRaw(msg)
 	if err == nil {
@@ -108,8 +109,10 @@ func (mc *MsgCenter) WrapBM(targets []int32, msg proto.Message) (*BroadcastMsg, 
 }
 
 // Handle 转发消息处理函数
+//        转发消息会被解码成原始消息，并调用注册过的处理函数来处理此消息
 //   fmsg 收到的转发消息
-func (mc *MsgCenter) Handle(fmsg *ForwardMsg, from MsgServer) error {
+//   from 消息流
+func (mc *MsgCenter) Handle(fmsg *ForwardMsg, from MsgStream) error {
 	info, ok := mc.info[fmsg.Msg.Type]
 	if !ok {
 		return fmt.Errorf("unregistered message type %d", fmsg.Msg.Type)
