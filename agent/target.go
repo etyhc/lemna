@@ -68,12 +68,13 @@ func C2S(src CTarget, pool TargetPool) error {
 
 		dest, ok := src.Cache()[fmsg.Target]
 		if !ok {
-			dest = pool.GetTarget(fmsg.Target).(STarget)
-			if dest == nil {
+			d := pool.GetTarget(fmsg.Target)
+			if d == nil {
 				invalidTarget(src, fmsg.Target)
 				logger.Errorf("not find server<%d>", fmsg.Target)
 				continue
 			}
+			dest = d.(STarget)
 		}
 
 		//转发指令
@@ -100,7 +101,7 @@ func S2C(src STarget, pool TargetPool) error {
 		}
 
 		for _, cid := range bmsg.Targets {
-			c := pool.GetTarget(cid).(CTarget)
+			c := pool.GetTarget(cid)
 			if c == nil {
 				invalidTarget(src, cid)
 				logger.Errorf("not find client<%d>", cid)
@@ -113,9 +114,9 @@ func S2C(src STarget, pool TargetPool) error {
 			if err != nil {
 				invalidTarget(src, cid)
 				logger.Error(c.Error(err))
-				delete(c.Cache(), src.ID())
+				delete(c.(CTarget).Cache(), src.ID())
 			} else {
-				c.Cache()[src.ID()] = src
+				c.(CTarget).Cache()[src.ID()] = src
 			}
 		}
 	}
