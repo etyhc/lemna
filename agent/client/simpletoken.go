@@ -6,6 +6,7 @@ import (
 	"time"
 )
 
+// SimpleToken 一个Token示例
 type SimpleToken struct {
 	db map[string]*token
 }
@@ -20,6 +21,7 @@ var tokenDB = map[string]*token{
 	"token1": {1, 1, 0},
 	"token2": {2, 2, 0}}
 
+// GetUID  接口实现
 func (st *SimpleToken) GetUID(sessionid int32) (int32, error) {
 	for _, tk := range st.db {
 		if tk.sid == sessionid {
@@ -32,6 +34,7 @@ func (st *SimpleToken) GetUID(sessionid int32) (int32, error) {
 	return 0, fmt.Errorf("no UID with<sessionid=%d>", sessionid)
 }
 
+// GetSessionID 接口实现
 func (st *SimpleToken) GetSessionID(token string) (int32, error) {
 	tk, ok := st.db[token]
 	if ok {
@@ -41,6 +44,7 @@ func (st *SimpleToken) GetSessionID(token string) (int32, error) {
 	return 0, fmt.Errorf("invaild SimpleToken %s", token)
 }
 
+// NewSimpleToken 新的Token服务
 func NewSimpleToken() (st *SimpleToken) {
 	st = &SimpleToken{}
 	st.db = tokenDB

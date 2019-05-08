@@ -7,9 +7,9 @@ const (
 	SERVERSCHELOAD               //最小负载调度
 )
 
-//ServerInfo 服务器信息,用于代理发现服务器
+// Info 服务器信息,用于代理发现服务器
 //           服务器启动后发布自己的信息给代理
-type ServerInfo struct {
+type Info struct {
 	Addr string `json:"addr"` //服务器地址
 	Type int32  `json:"type"` //服务器类型
 	Sche int32  `json:"sche"` //服务器调度策略
@@ -18,6 +18,6 @@ type ServerInfo struct {
 
 // Topic 服务器信息主题
 //       用于服务器发布和代理服务器订阅
-func (si *ServerInfo) Topic() string {
+func (si *Info) Topic() string {
 	return "ServerInfo"
 }

@@ -8,10 +8,10 @@ import (
 	proto "github.com/golang/protobuf/proto"
 )
 
-//  MsgStream 消息流，用于接收和发送消息
-//            MsgCenter处理消息时会将消息流代入消息回调函数，以便消息回复.
-//          	这个接口只有一个用处，让服务器程序写游戏客户端测试代码能够复用msgcenter代码
-//            否则可以使用*Server
+// MsgStream 消息流，用于接收和发送消息
+//           MsgCenter处理消息时会将消息流代入消息回调函数，以便消息回复.
+//           这个接口只有一个用处，让服务器程序写游戏客户端测试代码能够复用msgcenter代码
+//           否则可以使用*Server
 type MsgStream interface {
 	// Broadcast 服务器向客户端广播消息
 	Broadcast([]int32, interface{}) error

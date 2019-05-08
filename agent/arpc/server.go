@@ -35,10 +35,10 @@ func (s *Server) Broadcast(targets []int32, msg interface{}) error {
 	return s.stream.Send(bmsg)
 }
 
-// Broadcast 转发消息
-//           内部实现仍是广播消息，只是广播只有1个客户端
-//    target 将消息转发给此客户端
-//       msg 被转发消息
+// Forward 转发消息
+//         内部实现仍是广播消息，只是广播只有1个客户端
+//  target 将消息转发给此客户端
+//     msg 被转发消息
 func (s *Server) Forward(target int32, msg interface{}) error {
 	bmsg, err := s.mc.WrapBM([]int32{target}, msg.(proto.Message))
 	if err != nil {

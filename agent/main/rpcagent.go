@@ -26,7 +26,7 @@ func main() {
 		return
 	}
 	sp := server.NewSubServerPool(*configaddr)
-	cp := client.NewClientService(*addr, client.NewSimpleToken())
+	cp := client.NewService(*addr, client.NewSimpleToken())
 	as := agent.NewService(sp, cp)
 	if err := as.Run(); err != nil {
 		logger.Error(err)

@@ -7,14 +7,14 @@ import (
 // Server 代理服务器rpc调用客户端
 type Server struct {
 	rpcc  *arpc.Client //rpc客户端
-	Info  *ServerInfo  //服务器信息
+	Info  *Info        //服务器信息
 	Round int32        //服务器被调度次数
 }
 
 // NewServer 新服务器
 //    client rpc客户端
 //      info 订阅的服务器信息
-func NewServer(client *arpc.Client, info *ServerInfo) *Server {
+func NewServer(client *arpc.Client, info *Info) *Server {
 	return &Server{rpcc: client, Info: info}
 }
 

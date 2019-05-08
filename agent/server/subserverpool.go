@@ -45,7 +45,7 @@ func NewSubServerPool(addr string) *SubServerPool {
 	return &SubServerPool{servers: make(map[int32]map[string]*Server), addr: addr}
 }
 
-//GetServer 服务器池接口实现
+// GetTarget 服务器池接口实现
 func (ssp *SubServerPool) GetTarget(target int32) agent.Target {
 	ret := schedule(ssp.servers[target])
 	if ret != nil {
@@ -54,14 +54,14 @@ func (ssp *SubServerPool) GetTarget(target int32) agent.Target {
 	return nil
 }
 
-//SetClientPool 服务器池接口实现
+// Bind 服务器池接口实现
 func (ssp *SubServerPool) Bind(cp agent.TargetPool) {
 	ssp.cp = cp
 }
 
 // refreshServer 刷新服务器信息
 //               如果已经有服务器，更新服务器信息，返回true，否则返回false
-func (ssp *SubServerPool) refreshServer(info *ServerInfo) bool {
+func (ssp *SubServerPool) refreshServer(info *Info) bool {
 	if servers, ok := ssp.servers[info.Type]; ok {
 		if s, ok := servers[info.Addr]; ok {
 			s.Info = info
@@ -73,7 +73,7 @@ func (ssp *SubServerPool) refreshServer(info *ServerInfo) bool {
 
 // registerServer 注册服务器
 //                根据服务器信息，连接服务器,并待用服务器转发函数
-func (ssp *SubServerPool) registerServer(info *ServerInfo) {
+func (ssp *SubServerPool) registerServer(info *Info) {
 	go func() {
 		c := arpc.NewClient(info.Addr, info.Type, agent.ServiceID)
 		err := c.Init()
@@ -95,12 +95,12 @@ func (ssp *SubServerPool) registerServer(info *ServerInfo) {
 //     订阅到服务器后链接注册服务器，如果已注册更新服务器信息
 func (ssp *SubServerPool) Run() error {
 	finder := crpc.Channel{Addr: ssp.addr}
-	ch, err := finder.Subscribe(&ServerInfo{})
+	ch, err := finder.Subscribe(&Info{})
 	if err != nil {
 		return err
 	}
 	for {
-		info, ok := (<-ch).(*ServerInfo)
+		info, ok := (<-ch).(*Info)
 		if !ok {
 			return fmt.Errorf("subscribe closed")
 		}

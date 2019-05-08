@@ -27,7 +27,7 @@ func (c *Client) Error(err interface{}) error {
 	return fmt.Errorf("<uid=%d>%s", c.uid, err)
 }
 
-// UID 客户端UID
+// ID 客户端UID
 func (c *Client) ID() int32 {
 	return c.uid
 }
@@ -47,11 +47,11 @@ func (c *Client) Cache() map[int32]agent.STarget {
 	return c.cache
 }
 
-//  Run 运行客户端转发功能，循环等待客户端消息并转发给服务器
-// pool 转发服务器池
-//      等待消息错误，返回
-//      在自己的缓存未找到转发服务器，再从转发服务器池寻找转发服务器，无视无转发服务器错误
-//      转发失败清除自己缓存的转发服务器
+// Run 运行客户端转发功能，循环等待客户端消息并转发给服务器
+//       等待消息错误，返回
+//       在自己的缓存未找到转发服务器，再从转发服务器池寻找转发服务器，无视无转发服务器错误
+//       转发失败清除自己缓存的转发服务器
+//  pool 转发服务器池
 func (c *Client) Run(pool agent.TargetPool) error {
 	for {
 		fmsg, err := c.stream.Recv()

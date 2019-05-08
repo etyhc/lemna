@@ -14,23 +14,23 @@ import (
 	"google.golang.org/grpc/metadata"
 )
 
-// ClientService 代理服务，接受客户端连接，并验证
-//         将客户端消息转发给服务器并将服务器消息转发给客户端
-type ClientService struct {
+// Service 代理服务，接受客户端连接，并验证
+//               将客户端消息转发给服务器并将服务器消息转发给客户端
+type Service struct {
 	addr      string         //代理地址
 	token     Token          //Token
 	clientmgr *clientManager //客户端池
 	sp        agent.TargetPool
 }
 
-// NewClientService 新代理服务
-func NewClientService(addr string, t Token) *ClientService {
+// NewService 新代理服务
+func NewService(addr string, t Token) *Service {
 	cp := newClientMananger()
-	return &ClientService{addr: addr, token: t, clientmgr: cp}
+	return &Service{addr: addr, token: t, clientmgr: cp}
 }
 
-// GetClient 目标池接口实现
-func (cs *ClientService) GetTarget(cid int32) agent.Target {
+// GetTarget 目标池接口实现
+func (cs *Service) GetTarget(cid int32) agent.Target {
 	ret := cs.clientmgr.getClient(cid)
 	if ret != nil {
 		return ret
@@ -38,15 +38,15 @@ func (cs *ClientService) GetTarget(cid int32) agent.Target {
 	return nil
 }
 
-// SetServerPool 目标池接口实现
-func (cs *ClientService) Bind(sp agent.TargetPool) {
+// Bind 目标池接口实现
+func (cs *Service) Bind(sp agent.TargetPool) {
 	cs.sp = sp
 }
 
 // Login rpc.ClientServer.Login接口实现
 //       根据token分配唯一sessionid，并将此ID通过消息头返回给客户端
 //       客户端调用Forward时应将此头返回给服务器
-func (cs *ClientService) Login(ctx context.Context, msg *arpc.LoginMsg) (*arpc.LoginMsg, error) {
+func (cs *Service) Login(ctx context.Context, msg *arpc.LoginMsg) (*arpc.LoginMsg, error) {
 	md, ok := metadata.FromIncomingContext(ctx)
 	if !ok {
 		return nil, fmt.Errorf("invalid rpc,no metadata")
@@ -71,7 +71,7 @@ func (cs *ClientService) Login(ctx context.Context, msg *arpc.LoginMsg) (*arpc.L
 
 // Forward rpc.ClientServer.Forward接口实现
 //         会验证消息头的session数据是否有效
-func (cs *ClientService) Forward(stream arpc.Client_ForwardServer) error {
+func (cs *Service) Forward(stream arpc.Client_ForwardServer) error {
 	md, ok := metadata.FromIncomingContext(stream.Context())
 	if !ok {
 		return fmt.Errorf("invalid rpc,no metadata")
@@ -96,7 +96,7 @@ func (cs *ClientService) Forward(stream arpc.Client_ForwardServer) error {
 }
 
 // Run 运行代理服务,接受客户端的连接
-func (cs *ClientService) Run() error {
+func (cs *Service) Run() error {
 	lis, err := net.Listen("tcp", cs.addr)
 	if err != nil {
 		return err
