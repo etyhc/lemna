@@ -88,7 +88,7 @@ func (cs *ClientService) Forward(stream arpc.Client_ForwardServer) error {
 	//根据sessionid从client管理器初始化一个Client
 	client, err := cs.clientmgr.newClient(stream, uid)
 	if err == nil {
-		err = agent.CtoS(client, cs.sp)
+		err = agent.C2S(client, cs.sp)
 		cs.clientmgr.delClient(uid)
 	}
 	return err

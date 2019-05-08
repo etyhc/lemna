@@ -7,7 +7,6 @@ package arpc
 
 import (
 	fmt "fmt"
-	"lemna/logger"
 	"net"
 	"strconv"
 
@@ -15,19 +14,20 @@ import (
 	"google.golang.org/grpc/metadata"
 )
 
-type ServerIndex struct {
+// serverIndex 代理服务器索引
+type serverIndex struct {
 	index map[uint32]*Server
 }
 
-func NewServerIndex() *ServerIndex {
-	return &ServerIndex{index: make(map[uint32]*Server)}
+func newServerIndex() *serverIndex {
+	return &serverIndex{index: make(map[uint32]*Server)}
 }
 
-func (si *ServerIndex) get(id uint32) *Server {
+func (si *serverIndex) get(id uint32) *Server {
 	return si.index[id]
 }
 
-func (si *ServerIndex) put(s *Server) error {
+func (si *serverIndex) put(s *Server) error {
 	if _, ok := si.index[s.ID()]; ok {
 		return fmt.Errorf("clientid<%d> conflcit", s.ID())
 	}
@@ -35,23 +35,27 @@ func (si *ServerIndex) put(s *Server) error {
 	return nil
 }
 
-func (si *ServerIndex) remove(s *Server) {
+func (si *serverIndex) remove(s *Server) {
 	delete(si.index, s.ID())
 }
 
-// ServerService rpc服务器端封装，用于服务器开发
+// ServerService 服务器rpc服务，用于服务器开发
+//               服务接收代理服务器连接，并执行代理服务器的rpc调用
 type ServerService struct {
-	Addr      string     //服务器地址
-	Typeid    int32      //服务器类型
-	Msgcenter *MsgCenter //消息中心
-	si        *ServerIndex
+	Addr      string       //服务器地址
+	Typeid    int32        //服务器类型
+	Msgcenter *MsgCenter   //消息中心
+	si        *serverIndex //代理服务器索引
 }
 
+// Get 根据唯一ID得到代理服务器rpc服务端
 func (ss *ServerService) Get(id uint32) *Server {
 	return ss.si.get(id)
 }
 
-// Forward rpc.Forward调用实现,解析转发来的消息
+// Forward rpc.Forward调用实现
+//         执行代理服务器的Forward调用
+//         解析代理转发来的消息
 func (ss *ServerService) Forward(stream Server_ForwardServer) error {
 	md, ok := metadata.FromIncomingContext(stream.Context())
 	if !ok {
@@ -72,24 +76,13 @@ func (ss *ServerService) Forward(stream Server_ForwardServer) error {
 		return err
 	}
 	defer ss.si.remove(server)
-	for {
-		in, err := server.stream.Recv()
-		if err == nil {
-			err = ss.Msgcenter.Handle(in, server)
-			if err != nil {
-				//忽略错误的消息
-				logger.Error(err)
-			}
-		} else {
-			return err
-		}
-	}
+	return server.Handle()
 }
 
 // Run 运行rpc服务,阻塞的
 func (ss *ServerService) Run() error {
 	lis, err := net.Listen("tcp", ss.Addr)
-	ss.si = NewServerIndex()
+	ss.si = newServerIndex()
 	if err == nil {
 		rpcs := grpc.NewServer()
 		RegisterServerServer(rpcs, ss)

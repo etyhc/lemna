@@ -7,39 +7,43 @@ import (
 	"lemna/logger"
 )
 
-// Client 代理客户端
+// Client 客户端rpc调用服务
 type Client struct {
 	stream arpc.Client_ForwardServer //网络流
-	id     int32                     //客户端id
-	cache  map[int32]agent.Target    //转发目标缓存
+	uid    int32                     //客户端id
+	cache  map[int32]agent.STarget   //转发目标缓存
 	Value  interface{}               //使用者可以保存任何数据
 }
 
-// NewClient 新代理目标
-//         s 目标的网络流
-//        id 目标标识，客户端唯一，服务器可能不唯一
+// NewClient 新客户端
+//         s 客户端网络流
+//        id 客户端uid，客户端唯一
 func NewClient(s arpc.Client_ForwardServer, id int32) *Client {
-	return &Client{stream: s, id: id, cache: make(map[int32]agent.Target)}
+	return &Client{stream: s, uid: id, cache: make(map[int32]agent.STarget)}
 }
 
 // Error 附加目标信息到错误上
 func (c *Client) Error(err interface{}) error {
-	return fmt.Errorf("<id=%d>%s", c.id, err)
+	return fmt.Errorf("<uid=%d>%s", c.uid, err)
 }
 
+// UID 客户端UID
 func (c *Client) ID() int32 {
-	return c.id
+	return c.uid
 }
 
+// Send 向客户端发送转发消息
 func (c *Client) Send(msg *arpc.ForwardMsg) error {
 	return c.stream.Send(msg)
 }
 
+// Recv 接收客户端转发消息
 func (c *Client) Recv() (*arpc.ForwardMsg, error) {
 	return c.stream.Recv()
 }
 
-func (c *Client) Cache() map[int32]agent.Target {
+// Cache 为客户端提供服务的服务器缓存
+func (c *Client) Cache() map[int32]agent.STarget {
 	return c.cache
 }
 
@@ -57,7 +61,7 @@ func (c *Client) Run(pool agent.TargetPool) error {
 
 		s, ok := c.cache[fmsg.Target]
 		if !ok {
-			s = pool.GetTarget(fmsg.Target)
+			s = pool.GetTarget(fmsg.Target).(agent.STarget)
 			if s == nil {
 				logger.Errorf("not find server<%d>", fmsg.Target)
 				continue
@@ -65,7 +69,7 @@ func (c *Client) Run(pool agent.TargetPool) error {
 		}
 
 		//转发指令
-		fmsg.Target = c.id
+		fmsg.Target = c.uid
 		err = s.Send(fmsg)
 		//转发失败
 		if err != nil {

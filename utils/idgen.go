@@ -5,6 +5,8 @@ import (
 	"time"
 )
 
+// ID32GenWithSalt 根据机器mac地址和salt生成32位ID
+//                 当机器和salt不变,ID不变，保证一致性
 func ID32GenWithSalt(salt string) uint32 {
 	ifs, _ := net.Interfaces()
 	hash := HashFnv1a(salt)
@@ -14,6 +16,7 @@ func ID32GenWithSalt(salt string) uint32 {
 	return hash
 }
 
+// ID32Gen 根据当前时间和机器mac地址生成32位ID，不保证一致性
 func ID32Gen() uint32 {
 	ifs, _ := net.Interfaces()
 	var hash uint32
