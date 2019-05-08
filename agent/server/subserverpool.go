@@ -1,3 +1,4 @@
+// Package server 实现了服务器的rpc调用.
 package server
 
 import (

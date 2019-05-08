@@ -1,4 +1,4 @@
-//Package content 内容订阅服务，内容可以是任何东西
+//Package content 内容订阅服务，内容可以被序列化成JSON数据
 package content
 
 import (
@@ -23,15 +23,22 @@ type Channel interface {
 	Subscribe(Content) (<-chan Content, error)
 }
 
+// Topic 内容主题
+//       实际是反射返回值得名字
 func Topic(v interface{}) string {
 	return reflect.TypeOf(v).Elem().Name()
 }
 
+// ToJSON 将内容json序列化
+//    ctt 被序列化的内容
 func ToJSON(ctt Content) ([]byte, error) {
 	ret, err := json.Marshal(ctt)
 	return ret, err
 }
 
+// FromJSON 从json数据中实例化内容
+//      ctt 内容类型
+//  jsonstr json数据
 func FromJSON(ctt Content, jsonstr []byte) (Content, error) {
 	err := json.Unmarshal(jsonstr, ctt)
 	if err != nil {

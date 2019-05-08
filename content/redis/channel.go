@@ -1,3 +1,5 @@
+// Package redis 基于redis实现了内容的发布/订阅.
+//               redis特性，所以内容不是持久的，无法订阅到订阅之前发布的内容
 package redis
 
 import (

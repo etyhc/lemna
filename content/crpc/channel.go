@@ -1,4 +1,6 @@
-//基于grpc的内容发布/订阅实现
+// Package crpc 基于grpc的内容发布/订阅实现.
+//
+//              发布内容是持久的，可以订阅到订阅之前发布的内容
 package crpc
 
 import (

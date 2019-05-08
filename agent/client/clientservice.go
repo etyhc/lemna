@@ -1,3 +1,4 @@
+// Package client 实现了客户端的rpc服务.
 package client
 
 import (
