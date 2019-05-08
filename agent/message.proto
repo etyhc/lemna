@@ -1,5 +1,7 @@
 syntax = "proto3";
 package agent;
 
+// InvalidTargetMsg 无效目标消息
+//                  在代理服务器检测到目标无效后，发送此消息给与之有关的目标
 message InvalidTargetMsg {
 }

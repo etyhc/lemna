@@ -1,3 +1,8 @@
+// Package arpc 基于grpc的代理服务器的基础定义.
+//
+//             定义了2个grpc服务Outside和Inside
+//             客户端<----------->代理<---------->服务器
+//                    Outside rpc      Inside rpc
 package arpc
 
 import (

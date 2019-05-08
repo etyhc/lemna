@@ -1,6 +1,7 @@
 package server
 
 import (
+	"fmt"
 	"lemna/agent"
 	"lemna/agent/arpc"
 	"lemna/content/crpc"
@@ -76,7 +77,7 @@ func (ssp *SubServerPool) registerServer(info *ServerInfo) {
 			s := NewServer(c, info)
 			ssp.servers[info.Type][info.Addr] = s
 			logger.Infof("%s(%d) is running", info.Addr, info.Type)
-			err = agent.StoC(s, ssp.cp)
+			err = agent.S2C(s, ssp.cp)
 			delete(ssp.servers[info.Type], info.Addr)
 		}
 		logger.Error(err)
@@ -91,20 +92,16 @@ func (ssp *SubServerPool) Run() error {
 	if err != nil {
 		return err
 	}
-	go func() {
-		for {
-			info, ok := (<-ch).(*ServerInfo)
-			if !ok {
-				logger.Debug("subscribe closed")
-				return
-			}
-			if ssp.refreshServer(info) {
-				logger.Info("refresh ", info)
-			} else {
-				logger.Info("register ", info)
-				ssp.registerServer(info)
-			}
+	for {
+		info, ok := (<-ch).(*ServerInfo)
+		if !ok {
+			return fmt.Errorf("subscribe closed")
 		}
-	}()
-	return nil
+		if ssp.refreshServer(info) {
+			logger.Info("refresh ", info)
+		} else {
+			logger.Info("register ", info)
+			ssp.registerServer(info)
+		}
+	}
 }

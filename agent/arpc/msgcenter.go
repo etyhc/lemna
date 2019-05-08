@@ -23,7 +23,7 @@ type MsgServer interface {
 /*MsgHandler 是个消息回调函数，需要实现，并注册到MsgCenter
   int32 消息来源
   interface{} 消息本体
-	MsgAgent 消息代理*/
+	MsgServer 消息来源流，用于回复*/
 type MsgHandler func(int32, interface{}, MsgServer)
 
 type msgInfo struct {
@@ -61,6 +61,9 @@ func (mc *MsgCenter) Reg(msg interface{}, handler MsgHandler) {
 	mc.hash[name] = hash
 }
 
+// WrapFMNoCheck 将消息封装成转发消息,无需注册
+//        target 转发目标
+//           msg 被封装消息
 func WrapFMNoCheck(target int32, msg proto.Message) (*ForwardMsg, error) {
 	hash := fnvhash(reflect.TypeOf(msg).Elem().Name())
 	buf, err := proto.Marshal(msg)
@@ -82,9 +85,9 @@ func (mc *MsgCenter) wrapRaw(msg proto.Message) (*RawMsg, error) {
 	return &RawMsg{Type: hash, Raw: buf}, nil
 }
 
-/*Wrap 将消息封装为转发消息
-  target 转发目标
-  msg 被编码的消息*/
+// WrapFM 将消息封装为转发消息,未注册消息封装会失败
+// target 转发目标
+//    msg 被编码的消息
 func (mc *MsgCenter) WrapFM(target int32, msg proto.Message) (*ForwardMsg, error) {
 	raw, err := mc.wrapRaw(msg)
 	if err == nil {
@@ -93,9 +96,9 @@ func (mc *MsgCenter) WrapFM(target int32, msg proto.Message) (*ForwardMsg, error
 	return nil, err
 }
 
-/*WrapBroadcast 将消息封装为转发消息
-  targets 转发目标数组
-  msg 被编码的消息*/
+//  WrapBM 将消息封装为广播消息,未注册消息封装会失败
+// targets 转发目标数组
+//     msg 被编码的消息
 func (mc *MsgCenter) WrapBM(targets []int32, msg proto.Message) (*BroadcastMsg, error) {
 	raw, err := mc.wrapRaw(msg)
 	if err == nil {
@@ -104,8 +107,8 @@ func (mc *MsgCenter) WrapBM(targets []int32, msg proto.Message) (*BroadcastMsg, 
 	return nil, err
 }
 
-/*Handle 转发消息处理函数
-  fmsg 转发消息*/
+// Handle 转发消息处理函数
+//   fmsg 收到的转发消息
 func (mc *MsgCenter) Handle(fmsg *ForwardMsg, from MsgServer) error {
 	info, ok := mc.info[fmsg.Msg.Type]
 	if !ok {

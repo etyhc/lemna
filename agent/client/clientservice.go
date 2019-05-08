@@ -90,8 +90,6 @@ func (cs *ClientService) Forward(stream arpc.Client_ForwardServer) error {
 	if err == nil {
 		err = agent.CtoS(client, cs.sp)
 		cs.clientmgr.delClient(uid)
-		//通知服务器用户失效
-		client.SayBye()
 	}
 	return err
 }

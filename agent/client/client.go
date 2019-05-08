@@ -35,27 +35,12 @@ func (c *Client) Send(msg *arpc.ForwardMsg) error {
 	return c.stream.Send(msg)
 }
 
-func (c *Client) SayBye() {
-	for _, server := range c.cache {
-		agent.InvalidTarget(server, c.id)
-	}
-}
 func (c *Client) Recv() (*arpc.ForwardMsg, error) {
 	return c.stream.Recv()
 }
 
-func (c *Client) Cache(t agent.Target) {
-	c.cache[t.ID()] = t
-}
-
-func (c *Client) GetCache(id int32) agent.Target {
-	if ret, ok := c.cache[id]; ok {
-		return ret
-	}
-	return nil
-}
-func (c *Client) Uncache(id int32) {
-	delete(c.cache, id)
+func (c *Client) Cache() map[int32]agent.Target {
+	return c.cache
 }
 
 //  Run 运行客户端转发功能，循环等待客户端消息并转发给服务器
@@ -85,7 +70,7 @@ func (c *Client) Run(pool agent.TargetPool) error {
 		//转发失败
 		if err != nil {
 			logger.Error(s.Error(err))
-			c.Uncache(s.ID())
+			delete(c.cache, s.ID())
 			continue
 		}
 	}
