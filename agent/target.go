@@ -11,7 +11,7 @@ type Target interface {
 	Send(*arpc.ForwardMsg) error
 	// ID 目标ID，客户端是唯一的，服务器端只是代表服务器类型
 	//    代理连接很多同类型服务器，但同类型服务器只有一个为客户端服务
-	ID() int32
+	ID() uint32
 	// Error 为err添加目标信息
 	Error(err interface{}) error
 }
@@ -24,7 +24,7 @@ type CTarget interface {
 	Target
 	Recv() (*arpc.ForwardMsg, error)
 	//服务器缓存
-	Cache() map[int32]STarget
+	Cache() map[uint32]STarget
 }
 
 // STarget 服务器目标
@@ -37,7 +37,7 @@ type STarget interface {
 // TargetPool 目标池
 type TargetPool interface {
 	// GetTarget 得到目标，无目标返回nil
-	GetTarget(int32) Target
+	GetTarget(uint32) Target
 	// 绑定转发池
 	Bind(TargetPool)
 	// 运行，阻塞的
@@ -45,7 +45,7 @@ type TargetPool interface {
 }
 
 // invalidTarget 将无效目标dest，发给src
-func invalidTarget(src Target, dest int32) {
+func invalidTarget(src Target, dest uint32) {
 	itm, err := arpc.WrapFMNoCheck(dest, &InvalidTargetMsg{})
 	if err == nil {
 		src.Send(itm)

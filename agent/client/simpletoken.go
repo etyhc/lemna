@@ -12,8 +12,8 @@ type SimpleToken struct {
 }
 
 type token struct {
-	sid     int32
-	uid     int32
+	sid     uint32
+	uid     uint32
 	timeout int32
 }
 
@@ -22,7 +22,7 @@ var tokenDB = map[string]*token{
 	"token2": {2, 2, 0}}
 
 // GetUID  接口实现
-func (st *SimpleToken) GetUID(sessionid int32) (int32, error) {
+func (st *SimpleToken) GetUID(sessionid uint32) (uint32, error) {
 	for _, tk := range st.db {
 		if tk.sid == sessionid {
 			if atomic.LoadInt32(&tk.timeout) > 0 {
@@ -35,7 +35,7 @@ func (st *SimpleToken) GetUID(sessionid int32) (int32, error) {
 }
 
 // GetSessionID 接口实现
-func (st *SimpleToken) GetSessionID(token string) (int32, error) {
+func (st *SimpleToken) GetSessionID(token string) (uint32, error) {
 	tk, ok := st.db[token]
 	if ok {
 		atomic.StoreInt32(&tk.timeout, 5)

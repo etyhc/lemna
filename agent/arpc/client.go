@@ -11,7 +11,7 @@ import (
 // Client 服务器rpc客户端
 type Client struct {
 	addr   string               //服务器地址
-	typeid int32                //服务器类型
+	typeid uint32               //服务器类型
 	stream Server_ForwardClient //服务器流
 	id     uint32               //代理唯一ID，每个Client都一样
 }
@@ -20,7 +20,7 @@ type Client struct {
 //      addr 服务器地址
 //    TypeID 服务器类型
 //        id 代理服务器唯一ID
-func NewClient(addr string, TypeID int32, id uint32) *Client {
+func NewClient(addr string, TypeID uint32, id uint32) *Client {
 	return &Client{addr: addr, typeid: TypeID, id: id}
 }
 
@@ -29,7 +29,7 @@ func NewClient(addr string, TypeID int32, id uint32) *Client {
 //         客户端不可用，代理通知为此用户提供服务的服务器，此用户不可用
 //  target 客户端ID
 //     msg 要发送的消息
-func (c *Client) Forward(target int32, msg proto.Message) error {
+func (c *Client) Forward(target uint32, msg proto.Message) error {
 	fmsg, err := WrapFMNoCheck(target, msg)
 	if err != nil {
 		return err
@@ -53,7 +53,7 @@ func (c *Client) ID() uint32 {
 }
 
 // TypeID 服务器类型
-func (c *Client) TypeID() int32 {
+func (c *Client) TypeID() uint32 {
 	return c.typeid
 }
 

@@ -23,6 +23,99 @@ var _ = math.Inf
 // proto package needs to be updated.
 const _ = proto.ProtoPackageIsVersion2 // please upgrade the proto package
 
+// ====转发消息定义=====
+type RawMsg struct {
+	Type                 uint32   `protobuf:"varint,1,opt,name=type,proto3" json:"type,omitempty"`
+	Raw                  []byte   `protobuf:"bytes,2,opt,name=raw,proto3" json:"raw,omitempty"`
+	XXX_NoUnkeyedLiteral struct{} `json:"-"`
+	XXX_unrecognized     []byte   `json:"-"`
+	XXX_sizecache        int32    `json:"-"`
+}
+
+func (m *RawMsg) Reset()         { *m = RawMsg{} }
+func (m *RawMsg) String() string { return proto.CompactTextString(m) }
+func (*RawMsg) ProtoMessage()    {}
+func (*RawMsg) Descriptor() ([]byte, []int) {
+	return fileDescriptor_agent_616d0cfb03e142b2, []int{0}
+}
+func (m *RawMsg) XXX_Unmarshal(b []byte) error {
+	return xxx_messageInfo_RawMsg.Unmarshal(m, b)
+}
+func (m *RawMsg) XXX_Marshal(b []byte, deterministic bool) ([]byte, error) {
+	return xxx_messageInfo_RawMsg.Marshal(b, m, deterministic)
+}
+func (dst *RawMsg) XXX_Merge(src proto.Message) {
+	xxx_messageInfo_RawMsg.Merge(dst, src)
+}
+func (m *RawMsg) XXX_Size() int {
+	return xxx_messageInfo_RawMsg.Size(m)
+}
+func (m *RawMsg) XXX_DiscardUnknown() {
+	xxx_messageInfo_RawMsg.DiscardUnknown(m)
+}
+
+var xxx_messageInfo_RawMsg proto.InternalMessageInfo
+
+func (m *RawMsg) GetType() uint32 {
+	if m != nil {
+		return m.Type
+	}
+	return 0
+}
+
+func (m *RawMsg) GetRaw() []byte {
+	if m != nil {
+		return m.Raw
+	}
+	return nil
+}
+
+type ForwardMsg struct {
+	Target               uint32   `protobuf:"varint,1,opt,name=target,proto3" json:"target,omitempty"`
+	Msg                  *RawMsg  `protobuf:"bytes,2,opt,name=msg,proto3" json:"msg,omitempty"`
+	XXX_NoUnkeyedLiteral struct{} `json:"-"`
+	XXX_unrecognized     []byte   `json:"-"`
+	XXX_sizecache        int32    `json:"-"`
+}
+
+func (m *ForwardMsg) Reset()         { *m = ForwardMsg{} }
+func (m *ForwardMsg) String() string { return proto.CompactTextString(m) }
+func (*ForwardMsg) ProtoMessage()    {}
+func (*ForwardMsg) Descriptor() ([]byte, []int) {
+	return fileDescriptor_agent_616d0cfb03e142b2, []int{1}
+}
+func (m *ForwardMsg) XXX_Unmarshal(b []byte) error {
+	return xxx_messageInfo_ForwardMsg.Unmarshal(m, b)
+}
+func (m *ForwardMsg) XXX_Marshal(b []byte, deterministic bool) ([]byte, error) {
+	return xxx_messageInfo_ForwardMsg.Marshal(b, m, deterministic)
+}
+func (dst *ForwardMsg) XXX_Merge(src proto.Message) {
+	xxx_messageInfo_ForwardMsg.Merge(dst, src)
+}
+func (m *ForwardMsg) XXX_Size() int {
+	return xxx_messageInfo_ForwardMsg.Size(m)
+}
+func (m *ForwardMsg) XXX_DiscardUnknown() {
+	xxx_messageInfo_ForwardMsg.DiscardUnknown(m)
+}
+
+var xxx_messageInfo_ForwardMsg proto.InternalMessageInfo
+
+func (m *ForwardMsg) GetTarget() uint32 {
+	if m != nil {
+		return m.Target
+	}
+	return 0
+}
+
+func (m *ForwardMsg) GetMsg() *RawMsg {
+	if m != nil {
+		return m.Msg
+	}
+	return nil
+}
+
 type LoginMsg struct {
 	Token                string   `protobuf:"bytes,1,opt,name=token,proto3" json:"token,omitempty"`
 	XXX_NoUnkeyedLiteral struct{} `json:"-"`
@@ -34,7 +127,7 @@ func (m *LoginMsg) Reset()         { *m = LoginMsg{} }
 func (m *LoginMsg) String() string { return proto.CompactTextString(m) }
 func (*LoginMsg) ProtoMessage()    {}
 func (*LoginMsg) Descriptor() ([]byte, []int) {
-	return fileDescriptor_agent_251feda88b728369, []int{0}
+	return fileDescriptor_agent_616d0cfb03e142b2, []int{2}
 }
 func (m *LoginMsg) XXX_Unmarshal(b []byte) error {
 	return xxx_messageInfo_LoginMsg.Unmarshal(m, b)
@@ -61,54 +154,9 @@ func (m *LoginMsg) GetToken() string {
 	return ""
 }
 
-type RawMsg struct {
-	Type                 int32    `protobuf:"varint,1,opt,name=type,proto3" json:"type,omitempty"`
-	Raw                  []byte   `protobuf:"bytes,2,opt,name=raw,proto3" json:"raw,omitempty"`
-	XXX_NoUnkeyedLiteral struct{} `json:"-"`
-	XXX_unrecognized     []byte   `json:"-"`
-	XXX_sizecache        int32    `json:"-"`
-}
-
-func (m *RawMsg) Reset()         { *m = RawMsg{} }
-func (m *RawMsg) String() string { return proto.CompactTextString(m) }
-func (*RawMsg) ProtoMessage()    {}
-func (*RawMsg) Descriptor() ([]byte, []int) {
-	return fileDescriptor_agent_251feda88b728369, []int{1}
-}
-func (m *RawMsg) XXX_Unmarshal(b []byte) error {
-	return xxx_messageInfo_RawMsg.Unmarshal(m, b)
-}
-func (m *RawMsg) XXX_Marshal(b []byte, deterministic bool) ([]byte, error) {
-	return xxx_messageInfo_RawMsg.Marshal(b, m, deterministic)
-}
-func (dst *RawMsg) XXX_Merge(src proto.Message) {
-	xxx_messageInfo_RawMsg.Merge(dst, src)
-}
-func (m *RawMsg) XXX_Size() int {
-	return xxx_messageInfo_RawMsg.Size(m)
-}
-func (m *RawMsg) XXX_DiscardUnknown() {
-	xxx_messageInfo_RawMsg.DiscardUnknown(m)
-}
-
-var xxx_messageInfo_RawMsg proto.InternalMessageInfo
-
-func (m *RawMsg) GetType() int32 {
-	if m != nil {
-		return m.Type
-	}
-	return 0
-}
-
-func (m *RawMsg) GetRaw() []byte {
-	if m != nil {
-		return m.Raw
-	}
-	return nil
-}
-
+// 服务器广播消息，代理服务器会将此消息从新封装成Forward消息转给客户端
 type BroadcastMsg struct {
-	Targets              []int32  `protobuf:"varint,1,rep,packed,name=targets,proto3" json:"targets,omitempty"`
+	Targets              []uint32 `protobuf:"varint,1,rep,packed,name=targets,proto3" json:"targets,omitempty"`
 	Msg                  *RawMsg  `protobuf:"bytes,2,opt,name=msg,proto3" json:"msg,omitempty"`
 	XXX_NoUnkeyedLiteral struct{} `json:"-"`
 	XXX_unrecognized     []byte   `json:"-"`
@@ -119,7 +167,7 @@ func (m *BroadcastMsg) Reset()         { *m = BroadcastMsg{} }
 func (m *BroadcastMsg) String() string { return proto.CompactTextString(m) }
 func (*BroadcastMsg) ProtoMessage()    {}
 func (*BroadcastMsg) Descriptor() ([]byte, []int) {
-	return fileDescriptor_agent_251feda88b728369, []int{2}
+	return fileDescriptor_agent_616d0cfb03e142b2, []int{3}
 }
 func (m *BroadcastMsg) XXX_Unmarshal(b []byte) error {
 	return xxx_messageInfo_BroadcastMsg.Unmarshal(m, b)
@@ -139,7 +187,7 @@ func (m *BroadcastMsg) XXX_DiscardUnknown() {
 
 var xxx_messageInfo_BroadcastMsg proto.InternalMessageInfo
 
-func (m *BroadcastMsg) GetTargets() []int32 {
+func (m *BroadcastMsg) GetTargets() []uint32 {
 	if m != nil {
 		return m.Targets
 	}
@@ -153,57 +201,11 @@ func (m *BroadcastMsg) GetMsg() *RawMsg {
 	return nil
 }
 
-type ForwardMsg struct {
-	Target               int32    `protobuf:"varint,1,opt,name=target,proto3" json:"target,omitempty"`
-	Msg                  *RawMsg  `protobuf:"bytes,2,opt,name=msg,proto3" json:"msg,omitempty"`
-	XXX_NoUnkeyedLiteral struct{} `json:"-"`
-	XXX_unrecognized     []byte   `json:"-"`
-	XXX_sizecache        int32    `json:"-"`
-}
-
-func (m *ForwardMsg) Reset()         { *m = ForwardMsg{} }
-func (m *ForwardMsg) String() string { return proto.CompactTextString(m) }
-func (*ForwardMsg) ProtoMessage()    {}
-func (*ForwardMsg) Descriptor() ([]byte, []int) {
-	return fileDescriptor_agent_251feda88b728369, []int{3}
-}
-func (m *ForwardMsg) XXX_Unmarshal(b []byte) error {
-	return xxx_messageInfo_ForwardMsg.Unmarshal(m, b)
-}
-func (m *ForwardMsg) XXX_Marshal(b []byte, deterministic bool) ([]byte, error) {
-	return xxx_messageInfo_ForwardMsg.Marshal(b, m, deterministic)
-}
-func (dst *ForwardMsg) XXX_Merge(src proto.Message) {
-	xxx_messageInfo_ForwardMsg.Merge(dst, src)
-}
-func (m *ForwardMsg) XXX_Size() int {
-	return xxx_messageInfo_ForwardMsg.Size(m)
-}
-func (m *ForwardMsg) XXX_DiscardUnknown() {
-	xxx_messageInfo_ForwardMsg.DiscardUnknown(m)
-}
-
-var xxx_messageInfo_ForwardMsg proto.InternalMessageInfo
-
-func (m *ForwardMsg) GetTarget() int32 {
-	if m != nil {
-		return m.Target
-	}
-	return 0
-}
-
-func (m *ForwardMsg) GetMsg() *RawMsg {
-	if m != nil {
-		return m.Msg
-	}
-	return nil
-}
-
 func init() {
-	proto.RegisterType((*LoginMsg)(nil), "rpc.LoginMsg")
-	proto.RegisterType((*RawMsg)(nil), "rpc.RawMsg")
-	proto.RegisterType((*BroadcastMsg)(nil), "rpc.BroadcastMsg")
-	proto.RegisterType((*ForwardMsg)(nil), "rpc.ForwardMsg")
+	proto.RegisterType((*RawMsg)(nil), "arpc.RawMsg")
+	proto.RegisterType((*ForwardMsg)(nil), "arpc.ForwardMsg")
+	proto.RegisterType((*LoginMsg)(nil), "arpc.LoginMsg")
+	proto.RegisterType((*BroadcastMsg)(nil), "arpc.BroadcastMsg")
 }
 
 // Reference imports to suppress errors if they are not otherwise used.
@@ -232,7 +234,7 @@ func NewClientClient(cc *grpc.ClientConn) ClientClient {
 
 func (c *clientClient) Login(ctx context.Context, in *LoginMsg, opts ...grpc.CallOption) (*LoginMsg, error) {
 	out := new(LoginMsg)
-	err := c.cc.Invoke(ctx, "/rpc.Client/Login", in, out, opts...)
+	err := c.cc.Invoke(ctx, "/arpc.Client/Login", in, out, opts...)
 	if err != nil {
 		return nil, err
 	}
@@ -240,7 +242,7 @@ func (c *clientClient) Login(ctx context.Context, in *LoginMsg, opts ...grpc.Cal
 }
 
 func (c *clientClient) Forward(ctx context.Context, opts ...grpc.CallOption) (Client_ForwardClient, error) {
-	stream, err := c.cc.NewStream(ctx, &_Client_serviceDesc.Streams[0], "/rpc.Client/Forward", opts...)
+	stream, err := c.cc.NewStream(ctx, &_Client_serviceDesc.Streams[0], "/arpc.Client/Forward", opts...)
 	if err != nil {
 		return nil, err
 	}
@@ -290,7 +292,7 @@ func _Client_Login_Handler(srv interface{}, ctx context.Context, dec func(interf
 	}
 	info := &grpc.UnaryServerInfo{
 		Server:     srv,
-		FullMethod: "/rpc.Client/Login",
+		FullMethod: "/arpc.Client/Login",
 	}
 	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
 		return srv.(ClientServer).Login(ctx, req.(*LoginMsg))
@@ -325,7 +327,7 @@ func (x *clientForwardServer) Recv() (*ForwardMsg, error) {
 }
 
 var _Client_serviceDesc = grpc.ServiceDesc{
-	ServiceName: "rpc.Client",
+	ServiceName: "arpc.Client",
 	HandlerType: (*ClientServer)(nil),
 	Methods: []grpc.MethodDesc{
 		{
@@ -360,7 +362,7 @@ func NewServerClient(cc *grpc.ClientConn) ServerClient {
 }
 
 func (c *serverClient) Forward(ctx context.Context, opts ...grpc.CallOption) (Server_ForwardClient, error) {
-	stream, err := c.cc.NewStream(ctx, &_Server_serviceDesc.Streams[0], "/rpc.Server/Forward", opts...)
+	stream, err := c.cc.NewStream(ctx, &_Server_serviceDesc.Streams[0], "/arpc.Server/Forward", opts...)
 	if err != nil {
 		return nil, err
 	}
@@ -426,7 +428,7 @@ func (x *serverForwardServer) Recv() (*ForwardMsg, error) {
 }
 
 var _Server_serviceDesc = grpc.ServiceDesc{
-	ServiceName: "rpc.Server",
+	ServiceName: "arpc.Server",
 	HandlerType: (*ServerServer)(nil),
 	Methods:     []grpc.MethodDesc{},
 	Streams: []grpc.StreamDesc{
@@ -440,24 +442,24 @@ var _Server_serviceDesc = grpc.ServiceDesc{
 	Metadata: "agent.proto",
 }
 
-func init() { proto.RegisterFile("agent.proto", fileDescriptor_agent_251feda88b728369) }
+func init() { proto.RegisterFile("agent.proto", fileDescriptor_agent_616d0cfb03e142b2) }
 
-var fileDescriptor_agent_251feda88b728369 = []byte{
+var fileDescriptor_agent_616d0cfb03e142b2 = []byte{
 	// 256 bytes of a gzipped FileDescriptorProto
-	0x1f, 0x8b, 0x08, 0x00, 0x00, 0x00, 0x00, 0x00, 0x02, 0xff, 0x84, 0x91, 0x4f, 0x4b, 0xc4, 0x30,
-	0x10, 0xc5, 0x37, 0xd6, 0x66, 0x75, 0xba, 0xa2, 0x0e, 0x22, 0x65, 0x41, 0x28, 0xb9, 0xd8, 0x53,
-	0xd1, 0xee, 0xd9, 0x8b, 0x0b, 0x7a, 0xd1, 0x4b, 0xfc, 0x04, 0xb1, 0x0d, 0x61, 0x51, 0x9b, 0x32,
-	0x0d, 0x16, 0xbf, 0xbd, 0x24, 0x69, 0xf1, 0xcf, 0x41, 0x6f, 0xf3, 0xe6, 0xe5, 0x37, 0x2f, 0x93,
-	0x40, 0xa6, 0x8c, 0xee, 0x5c, 0xd5, 0x93, 0x75, 0x16, 0x13, 0xea, 0x1b, 0x51, 0xc0, 0xc1, 0x83,
-	0x35, 0xbb, 0xee, 0x71, 0x30, 0x78, 0x06, 0xa9, 0xb3, 0x2f, 0xba, 0xcb, 0x59, 0xc1, 0xca, 0x43,
-	0x19, 0x85, 0xa8, 0x80, 0x4b, 0x35, 0x7a, 0x1f, 0x61, 0xdf, 0x7d, 0xf4, 0x3a, 0xd8, 0xa9, 0x0c,
-	0x35, 0x9e, 0x40, 0x42, 0x6a, 0xcc, 0xf7, 0x0a, 0x56, 0xae, 0xa4, 0x2f, 0xc5, 0x3d, 0xac, 0x6e,
-	0xc9, 0xaa, 0xb6, 0x51, 0x83, 0xf3, 0x54, 0x0e, 0x4b, 0xa7, 0xc8, 0x68, 0x37, 0xe4, 0xac, 0x48,
-	0xca, 0x54, 0xce, 0x12, 0x2f, 0x20, 0x79, 0x1b, 0x4c, 0x60, 0xb3, 0x3a, 0xab, 0xa8, 0x6f, 0xaa,
-	0x98, 0x24, 0x7d, 0x5f, 0x6c, 0x01, 0xee, 0x2c, 0x8d, 0x8a, 0x5a, 0x3f, 0xe6, 0x1c, 0x78, 0xe4,
-	0xa6, 0xf8, 0x49, 0xfd, 0x33, 0xa4, 0x6e, 0x81, 0x6f, 0x5f, 0x77, 0xba, 0x73, 0x78, 0x09, 0x69,
-	0xd8, 0x14, 0x8f, 0xc2, 0xa1, 0x79, 0xeb, 0xf5, 0x4f, 0x29, 0x16, 0x78, 0x0d, 0xcb, 0x29, 0x17,
-	0x8f, 0x83, 0xf7, 0x75, 0x8b, 0xf5, 0xef, 0x86, 0x58, 0x94, 0xec, 0x8a, 0xd5, 0x37, 0xc0, 0x9f,
-	0x34, 0xbd, 0x6b, 0xc2, 0xcd, 0x1f, 0xf0, 0x69, 0x68, 0x7c, 0x7f, 0x9c, 0x88, 0x3f, 0xf3, 0xf0,
-	0x21, 0x9b, 0xcf, 0x00, 0x00, 0x00, 0xff, 0xff, 0x68, 0x9c, 0xca, 0x65, 0x9f, 0x01, 0x00, 0x00,
+	0x1f, 0x8b, 0x08, 0x00, 0x00, 0x00, 0x00, 0x00, 0x02, 0xff, 0x84, 0x51, 0x4d, 0x4b, 0x03, 0x31,
+	0x10, 0x6d, 0xdc, 0x36, 0xd5, 0xe9, 0x56, 0xca, 0x20, 0xb2, 0xf4, 0x20, 0x4b, 0x4e, 0xeb, 0x65,
+	0x91, 0x2d, 0x9e, 0x05, 0x15, 0xf1, 0xa0, 0x97, 0xf8, 0x0b, 0x62, 0x1b, 0x62, 0x51, 0x37, 0xcb,
+	0x24, 0xb8, 0xf8, 0xef, 0x25, 0xc9, 0x16, 0x45, 0xc1, 0xde, 0xe6, 0xcd, 0xbc, 0x8f, 0x3c, 0x02,
+	0x33, 0x65, 0x74, 0xeb, 0xeb, 0x8e, 0xac, 0xb7, 0x38, 0x56, 0xd4, 0xad, 0x45, 0x0d, 0x5c, 0xaa,
+	0xfe, 0xd1, 0x19, 0x44, 0x18, 0xfb, 0xcf, 0x4e, 0x17, 0xac, 0x64, 0xd5, 0x5c, 0xc6, 0x19, 0x17,
+	0x90, 0x91, 0xea, 0x8b, 0x83, 0x92, 0x55, 0xb9, 0x0c, 0xa3, 0xb8, 0x05, 0xb8, 0xb3, 0xd4, 0x2b,
+	0xda, 0x04, 0xcd, 0x29, 0x70, 0xaf, 0xc8, 0x68, 0x3f, 0xa8, 0x06, 0x84, 0x67, 0x90, 0xbd, 0x3b,
+	0x13, 0x75, 0xb3, 0x26, 0xaf, 0x43, 0x52, 0x9d, 0x62, 0x64, 0x38, 0x88, 0x12, 0x0e, 0x1f, 0xac,
+	0xd9, 0xb6, 0xc1, 0xe3, 0x04, 0x26, 0xde, 0xbe, 0xea, 0x36, 0x5a, 0x1c, 0xc9, 0x04, 0xc4, 0x3d,
+	0xe4, 0xd7, 0x64, 0xd5, 0x66, 0xad, 0x9c, 0x0f, 0xac, 0x02, 0xa6, 0xc9, 0xdb, 0x15, 0xac, 0xcc,
+	0xaa, 0xb9, 0xdc, 0xc1, 0x7d, 0x59, 0xcd, 0x0b, 0xf0, 0x9b, 0xb7, 0xad, 0x6e, 0x3d, 0x9e, 0xc3,
+	0x24, 0xa6, 0xe2, 0x71, 0x62, 0xed, 0x9e, 0xb0, 0xfc, 0x85, 0xc5, 0x08, 0x57, 0x30, 0x1d, 0x6a,
+	0xe2, 0x22, 0x1d, 0xbf, 0x5b, 0x2f, 0xff, 0x6c, 0xc4, 0xa8, 0x62, 0x17, 0xac, 0xb9, 0x02, 0xfe,
+	0xa4, 0xe9, 0x43, 0x13, 0x5e, 0xfe, 0x27, 0xc7, 0xb4, 0xf9, 0x59, 0x2f, 0x19, 0x3c, 0xf3, 0xf8,
+	0x33, 0xab, 0xaf, 0x00, 0x00, 0x00, 0xff, 0xff, 0x38, 0x57, 0x62, 0x90, 0xa8, 0x01, 0x00, 0x00,
 }

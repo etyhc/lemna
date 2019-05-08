@@ -43,7 +43,7 @@ func (si *serverIndex) remove(s *Server) {
 //               服务接收代理服务器连接，并执行代理服务器的rpc调用
 type ServerService struct {
 	Addr      string       //服务器地址
-	Typeid    int32        //服务器类型
+	Typeid    uint32       //服务器类型
 	Msgcenter *MsgCenter   //消息中心
 	si        *serverIndex //代理服务器索引
 }

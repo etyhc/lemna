@@ -14,9 +14,9 @@ import (
 //              如果是有状态服务器，那么服务器应设置成SERVERSCHENIL,不让代理服务器进行调度
 //              并自己实现有状态调度器，与客户端协调状态
 type SubServerPool struct {
-	servers map[int32]map[string]*Server //所有订阅并连接的服务器
-	cp      agent.TargetPool             //客户端池
-	addr    string                       //订阅服务器地址
+	servers map[uint32]map[string]*Server //所有订阅并连接的服务器
+	cp      agent.TargetPool              //客户端池
+	addr    string                        //订阅服务器地址
 }
 
 // schedule 根据服务器信息调度服务器
@@ -42,11 +42,11 @@ func schedule(servers map[string]*Server) *Server {
 
 // NewSubServerPool 新订阅服务器池
 func NewSubServerPool(addr string) *SubServerPool {
-	return &SubServerPool{servers: make(map[int32]map[string]*Server), addr: addr}
+	return &SubServerPool{servers: make(map[uint32]map[string]*Server), addr: addr}
 }
 
 // GetTarget 服务器池接口实现
-func (ssp *SubServerPool) GetTarget(target int32) agent.Target {
+func (ssp *SubServerPool) GetTarget(target uint32) agent.Target {
 	ret := schedule(ssp.servers[target])
 	if ret != nil {
 		return ret

@@ -30,7 +30,7 @@ func NewService(addr string, t Token) *Service {
 }
 
 // GetTarget 目标池接口实现
-func (cs *Service) GetTarget(cid int32) agent.Target {
+func (cs *Service) GetTarget(cid uint32) agent.Target {
 	ret := cs.clientmgr.getClient(cid)
 	if ret != nil {
 		return ret
@@ -82,7 +82,7 @@ func (cs *Service) Forward(stream arpc.Client_ForwardServer) error {
 	}
 	logger.Debug(session)
 	tmp, _ := strconv.Atoi(session[0])
-	uid, err := cs.token.GetUID(int32(tmp))
+	uid, err := cs.token.GetUID(uint32(tmp))
 	if err != nil {
 		return err
 	}

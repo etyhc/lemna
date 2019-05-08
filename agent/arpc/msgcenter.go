@@ -2,7 +2,7 @@ package arpc
 
 import (
 	"fmt"
-	"hash/fnv"
+	"lemna/utils"
 	"reflect"
 
 	proto "github.com/golang/protobuf/proto"
@@ -14,9 +14,9 @@ import (
 //           否则可以使用*Server
 type MsgStream interface {
 	// Broadcast 服务器向客户端广播消息
-	Broadcast([]int32, interface{}) error
+	Broadcast([]uint32, interface{}) error
 	// Forward 向服务器或者客户端转发消息
-	Forward(int32, interface{}) error
+	Forward(uint32, interface{}) error
 	// ID 消息流唯一ID
 	ID() uint32
 }
@@ -25,7 +25,7 @@ type MsgStream interface {
 //      int32 消息来源
 //  interface 消息本体
 //  MsgServer 消息来源流，用于回复
-type MsgHandler func(int32, interface{}, MsgStream)
+type MsgHandler func(uint32, interface{}, MsgStream)
 
 type msgInfo struct {
 	elem    reflect.Type
@@ -34,19 +34,13 @@ type msgInfo struct {
 
 /*MsgCenter 消息中心,封装消息工具*/
 type MsgCenter struct {
-	hash map[string]int32
-	info map[int32]msgInfo
+	hash map[string]uint32
+	info map[uint32]msgInfo
 }
 
 /*NewMsgCenter 新消息中心*/
 func NewMsgCenter() *MsgCenter {
-	return &MsgCenter{hash: make(map[string]int32), info: make(map[int32]msgInfo)}
-}
-
-func fnvhash(str string) int32 {
-	h := fnv.New32a()
-	h.Write([]byte(str))
-	return int32(h.Sum32())
+	return &MsgCenter{hash: make(map[string]uint32), info: make(map[uint32]msgInfo)}
 }
 
 // Reg 消息注册
@@ -54,7 +48,7 @@ func fnvhash(str string) int32 {
 //  handler 消息处理函数
 func (mc *MsgCenter) Reg(msg interface{}, handler MsgHandler) {
 	name := reflect.TypeOf(msg).Elem().Name()
-	hash := fnvhash(name)
+	hash := utils.HashFnv1a(name)
 	if info, ok := mc.info[hash]; ok {
 		panic(fmt.Errorf("Hash(%d) conflict %s %s", hash, name, info.elem.Name()))
 	}
@@ -65,8 +59,8 @@ func (mc *MsgCenter) Reg(msg interface{}, handler MsgHandler) {
 // WrapFMNoCheck 将消息封装成转发消息,无需提前注册此消息
 //        target 转发目标
 //           msg 被封装的消息
-func WrapFMNoCheck(target int32, msg proto.Message) (*ForwardMsg, error) {
-	hash := fnvhash(reflect.TypeOf(msg).Elem().Name())
+func WrapFMNoCheck(target uint32, msg proto.Message) (*ForwardMsg, error) {
+	hash := utils.HashFnv1a(reflect.TypeOf(msg).Elem().Name())
 	buf, err := proto.Marshal(msg)
 	if err != nil {
 		return nil, err
@@ -89,7 +83,7 @@ func (mc *MsgCenter) wrapRaw(msg proto.Message) (*RawMsg, error) {
 // WrapFM 将消息封装为转发消息,此消息需提前注册
 //  target 转发目标
 //     msg 被转发的消息
-func (mc *MsgCenter) WrapFM(target int32, msg proto.Message) (*ForwardMsg, error) {
+func (mc *MsgCenter) WrapFM(target uint32, msg proto.Message) (*ForwardMsg, error) {
 	raw, err := mc.wrapRaw(msg)
 	if err == nil {
 		return &ForwardMsg{Target: target, Msg: raw}, nil
@@ -100,7 +94,7 @@ func (mc *MsgCenter) WrapFM(target int32, msg proto.Message) (*ForwardMsg, error
 // WrapBM 将消息封装为广播消息,此消息需提前注册
 //  targets 转发目标切片
 //      msg 被广播的消息
-func (mc *MsgCenter) WrapBM(targets []int32, msg proto.Message) (*BroadcastMsg, error) {
+func (mc *MsgCenter) WrapBM(targets []uint32, msg proto.Message) (*BroadcastMsg, error) {
 	raw, err := mc.wrapRaw(msg)
 	if err == nil {
 		return &BroadcastMsg{Targets: targets, Msg: raw}, nil

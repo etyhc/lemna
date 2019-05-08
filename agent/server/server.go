@@ -8,7 +8,7 @@ import (
 type Server struct {
 	rpcc  *arpc.Client //rpc客户端
 	Info  *Info        //服务器信息
-	Round int32        //服务器被调度次数
+	Round uint32       //服务器被调度次数
 }
 
 // NewServer 新服务器
@@ -29,7 +29,7 @@ func (s *Server) Send(msg *arpc.ForwardMsg) error {
 }
 
 // ID 服务器类型ID
-func (s *Server) ID() int32 {
+func (s *Server) ID() uint32 {
 	return s.rpcc.TypeID()
 }
 

@@ -7,15 +7,15 @@ import (
 )
 
 type clientManager struct {
-	clients map[int32]*Client
+	clients map[uint32]*Client
 	mu      sync.Mutex
 }
 
 func newClientMananger() *clientManager {
-	return &clientManager{clients: make(map[int32]*Client)}
+	return &clientManager{clients: make(map[uint32]*Client)}
 }
 
-func (cm *clientManager) newClient(s arpc.Client_ForwardServer, id int32) (*Client, error) {
+func (cm *clientManager) newClient(s arpc.Client_ForwardServer, id uint32) (*Client, error) {
 	cm.mu.Lock()
 	defer cm.mu.Unlock()
 	_, ok := cm.clients[id]
@@ -26,7 +26,7 @@ func (cm *clientManager) newClient(s arpc.Client_ForwardServer, id int32) (*Clie
 	return nil, fmt.Errorf("repeated client<id=%d>", id)
 }
 
-func (cm *clientManager) getClient(id int32) *Client {
+func (cm *clientManager) getClient(id uint32) *Client {
 	cm.mu.Lock()
 	defer cm.mu.Unlock()
 	ret, ok := cm.clients[id]
@@ -36,7 +36,7 @@ func (cm *clientManager) getClient(id int32) *Client {
 	return nil
 }
 
-func (cm *clientManager) delClient(id int32) {
+func (cm *clientManager) delClient(id uint32) {
 	cm.mu.Lock()
 	delete(cm.clients, id)
 	cm.mu.Unlock()

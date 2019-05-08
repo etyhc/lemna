@@ -9,7 +9,7 @@ import (
 
 // Server 服务器rpc服务端
 type Server struct {
-	typeid int32                //服务器类型
+	typeid uint32               //服务器类型
 	stream Server_ForwardServer //代理服务器流
 	mc     *MsgCenter           //消息中心
 	id     uint32               //代理服务器唯一ID
@@ -20,14 +20,14 @@ type Server struct {
 //    straem 代理消息流
 //        mc 消息处理中心
 //        id 代理服务器唯一ID
-func NewServer(typeid int32, stream Server_ForwardServer, mc *MsgCenter, id uint32) *Server {
+func NewServer(typeid uint32, stream Server_ForwardServer, mc *MsgCenter, id uint32) *Server {
 	return &Server{typeid: typeid, stream: stream, mc: mc, id: id}
 }
 
 // Broadcast 广播消息
 //   targets 将消息广播给切片里的所有客户端
 //       msg 被广播消息
-func (s *Server) Broadcast(targets []int32, msg interface{}) error {
+func (s *Server) Broadcast(targets []uint32, msg interface{}) error {
 	bmsg, err := s.mc.WrapBM(targets, msg.(proto.Message))
 	if err != nil {
 		return err
@@ -39,8 +39,8 @@ func (s *Server) Broadcast(targets []int32, msg interface{}) error {
 //         内部实现仍是广播消息，只是广播只有1个客户端
 //  target 将消息转发给此客户端
 //     msg 被转发消息
-func (s *Server) Forward(target int32, msg interface{}) error {
-	bmsg, err := s.mc.WrapBM([]int32{target}, msg.(proto.Message))
+func (s *Server) Forward(target uint32, msg interface{}) error {
+	bmsg, err := s.mc.WrapBM([]uint32{target}, msg.(proto.Message))
 	if err != nil {
 		return err
 	}
@@ -53,7 +53,7 @@ func (s *Server) ID() uint32 {
 }
 
 // TypeID 服务器类型ID
-func (s *Server) TypeID() int32 {
+func (s *Server) TypeID() uint32 {
 	return s.typeid
 }
 
