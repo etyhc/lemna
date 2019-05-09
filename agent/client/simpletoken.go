@@ -49,7 +49,7 @@ func NewSimpleToken() (st *SimpleToken) {
 	st = &SimpleToken{}
 	st.db = tokenDB
 	go func() {
-		tick := time.NewTicker(time.Duration(time.Second))
+		tick := time.NewTicker(time.Second)
 		defer tick.Stop()
 		for {
 			<-tick.C
