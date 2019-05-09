@@ -20,8 +20,8 @@ type Client struct {
 //      addr 服务器地址
 //    TypeID 服务器类型
 //        id 代理服务器唯一ID
-func NewClient(addr string, TypeID uint32, id uint32) *Client {
-	return &Client{addr: addr, typeid: TypeID, id: id}
+func NewClient(addr string, typeID uint32, id uint32) *Client {
+	return &Client{addr: addr, typeid: typeID, id: id}
 }
 
 // Forward 向服务器发送消息

@@ -3,7 +3,7 @@ package redis
 import "fmt"
 
 type AnyJSON struct {
-	Uid int32 `json:"uid"`
+	UID int32 `json:"uid"`
 }
 
 func (aj *AnyJSON) Topic() string {
@@ -23,7 +23,7 @@ func ExampleChannel() {
 		fmt.Println(err)
 	}
 	ret := <-retchan
-	fmt.Println(ret.(*AnyJSON).Uid)
+	fmt.Println(ret.(*AnyJSON).UID)
 	//Output: Sub
 	//Pub
 	//3

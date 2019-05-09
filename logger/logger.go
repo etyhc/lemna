@@ -22,13 +22,13 @@ const (
 )
 
 // LevelStr 默认日志等级字串，表示此行日志等级
-var LevelStr = []string{"", "ERR", "WAR", "INF", "DEB"}
+var levelStr = []string{"", "ERR", "WAR", "INF", "DEB"}
 
 func (level Level) String() string {
-	if level < 0 || int(level) >= len(LevelStr) {
+	if level < 0 || int(level) >= len(levelStr) {
 		return fmt.Sprint(int(level))
 	}
-	return LevelStr[level]
+	return levelStr[level]
 }
 
 // Logger 日志器

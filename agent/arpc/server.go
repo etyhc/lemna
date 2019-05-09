@@ -10,9 +10,9 @@ import (
 // Server 服务器rpc服务端
 type Server struct {
 	typeid uint32               //服务器类型
-	stream Server_ForwardServer //代理服务器流
-	mc     *MsgCenter           //消息中心
 	id     uint32               //代理服务器唯一ID
+	mc     *MsgCenter           //消息中心
+	stream Server_ForwardServer //代理服务器流
 }
 
 // NewServer 接收到代理服务器的rpc调用，生成新的rpc服务

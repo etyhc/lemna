@@ -36,7 +36,7 @@ func (ch *ChannelService) Publish(ctx context.Context, msg *ContentMsg) (*Conten
 		topic = make(map[string]int)
 		ch.topics[msg.Name] = topic
 	}
-	topic[msg.Info] = topic[msg.Info] + 1
+	topic[msg.Info]++
 	logger.Debug("pub<", msg.Name, ":", msg.Info, ">")
 	//新主题发送给订阅者
 	for addr := range ch.subscribers {

@@ -50,7 +50,7 @@ func (mc *MsgCenter) Reg(msg interface{}, handler MsgHandler) {
 	name := reflect.TypeOf(msg).Elem().Name()
 	hash := utils.HashFnv1a(name)
 	if info, ok := mc.info[hash]; ok {
-		panic(fmt.Errorf("Hash(%d) conflict %s %s", hash, name, info.elem.Name()))
+		panic(fmt.Sprintf("Hash(%d) conflict %s %s", hash, name, info.elem.Name()))
 	}
 	mc.info[hash] = msgInfo{reflect.TypeOf(msg).Elem(), handler}
 	mc.hash[name] = hash
