@@ -23,7 +23,8 @@ func (c *Channel) Publish(ctt content.Content) error {
 	if err == nil {
 		defer conn.Close()
 		sc := NewChannelClient(conn)
-		ctb, err := content.ToJSON(ctt)
+		var ctb []byte
+		ctb, err = content.ToJSON(ctt)
 		if err == nil {
 			_, err = sc.Publish(context.Background(), &ContentMsg{Info: string(ctb), Name: ctt.Topic()})
 		}

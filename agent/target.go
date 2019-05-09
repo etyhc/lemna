@@ -48,7 +48,7 @@ type TargetPool interface {
 func invalidTarget(src Target, dest uint32) {
 	itm, err := arpc.WrapFMNoCheck(dest, &InvalidTargetMsg{})
 	if err == nil {
-		src.Send(itm)
+		_ = src.Send(itm)
 	}
 }
 

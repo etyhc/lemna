@@ -54,7 +54,8 @@ func NewSimpleToken() (st *SimpleToken) {
 		for {
 			<-tick.C
 			for _, tk := range st.db {
-				if atomic.LoadInt32(&tk.timeout) > 0 {
+				if tk.timeout > 0 {
+					atomic.AddInt32(&tk.timeout, -1)
 				}
 			}
 		}
