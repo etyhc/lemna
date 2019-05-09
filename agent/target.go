@@ -53,6 +53,8 @@ func invalidTarget(src Target, dest uint32) {
 }
 
 // C2S 阻塞循环接收客户端消息并转发给相应服务器
+//     在自己的缓存未找到转发服务器，再从转发服务器池寻找转发服务器
+//     转发失败清除自己缓存的转发服务器，回复InvalidTargetMsg消息给客户端
 //   src 客户端，消息来源
 //  pool 服务器池，缓冲无服务器会从服务器池中获取服务器
 func C2S(src CTarget, pool TargetPool) error {

@@ -25,8 +25,7 @@ type Service struct {
 
 // NewService 新代理服务
 func NewService(addr string, t Token) *Service {
-	cp := newClientMananger()
-	return &Service{addr: addr, token: t, clientmgr: cp}
+	return &Service{addr: addr, token: t, clientmgr: newClientMananger()}
 }
 
 // GetTarget 目标池接口实现

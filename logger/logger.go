@@ -21,8 +21,8 @@ const (
 	DEBUG       // DEBUG 调试日志
 )
 
-// LevelStr 默认日志等级字串，表示此行日志等级
-var levelStr = []string{"", "ERR", "WAR", "INF", "DEB"}
+// levelStr 默认日志等级字串，表示此行日志等级
+var levelStr = [...]string{"", "ERR", "WAR", "INF", "DEB"}
 
 func (level Level) String() string {
 	if level < 0 || int(level) >= len(levelStr) {

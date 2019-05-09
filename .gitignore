@@ -2,3 +2,4 @@ rpcagent
 contentrpcserver
 go.sum
 *.exe
+*.swp

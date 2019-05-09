@@ -6,6 +6,7 @@ import (
 	"sync"
 )
 
+//clientManager 仅供client.Service使用
 type clientManager struct {
 	clients map[uint32]*Client
 	mu      sync.Mutex

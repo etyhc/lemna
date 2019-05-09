@@ -9,6 +9,7 @@ import (
 	fmt "fmt"
 	"net"
 	"strconv"
+	"sync"
 
 	"google.golang.org/grpc"
 	"google.golang.org/grpc/metadata"
@@ -17,17 +18,18 @@ import (
 // serverIndex 代理服务器索引
 type serverIndex struct {
 	index map[uint32]*Server
-}
-
-func newServerIndex() *serverIndex {
-	return &serverIndex{index: make(map[uint32]*Server)}
+	mu    sync.Mutex
 }
 
 func (si *serverIndex) get(id uint32) *Server {
+	si.mu.Lock()
+	defer si.mu.Unlock()
 	return si.index[id]
 }
 
 func (si *serverIndex) put(s *Server) error {
+	si.mu.Lock()
+	defer si.mu.Unlock()
 	if _, ok := si.index[s.ID()]; ok {
 		return fmt.Errorf("clientid<%d> conflcit", s.ID())
 	}
@@ -36,16 +38,27 @@ func (si *serverIndex) put(s *Server) error {
 }
 
 func (si *serverIndex) remove(s *Server) {
+	si.mu.Lock()
+	defer si.mu.Unlock()
 	delete(si.index, s.ID())
 }
 
 // ServerService 服务器rpc服务，用于服务器开发
 //               服务接收代理服务器连接，并执行代理服务器的rpc调用
 type ServerService struct {
-	Addr      string       //服务器地址
-	Typeid    uint32       //服务器类型
-	Msgcenter *MsgCenter   //消息中心
-	si        *serverIndex //代理服务器索引
+	addr   string       //服务器地址
+	typeid uint32       //服务器类型
+	mc     *MsgCenter   //消息中心
+	si     *serverIndex //代理服务器索引
+}
+
+// NewServerService 新rpc服务
+func NewServerService(addr string, typeid uint32, mc *MsgCenter) *ServerService {
+	return &ServerService{
+		addr:   addr,
+		typeid: typeid,
+		mc:     mc,
+		si:     &serverIndex{index: make(map[uint32]*Server)}}
 }
 
 // Get 根据唯一ID得到代理服务器rpc服务端
@@ -70,7 +83,7 @@ func (ss *ServerService) Forward(stream Server_ForwardServer) error {
 	if err != nil {
 		return err
 	}
-	server := NewServer(ss.Typeid, stream, ss.Msgcenter, uint32(cid))
+	server := NewServer(ss.typeid, stream, ss.mc, uint32(cid))
 	err = ss.si.put(server)
 	if err != nil {
 		return err
@@ -81,8 +94,7 @@ func (ss *ServerService) Forward(stream Server_ForwardServer) error {
 
 // Run 运行rpc服务,阻塞的
 func (ss *ServerService) Run() error {
-	lis, err := net.Listen("tcp", ss.Addr)
-	ss.si = newServerIndex()
+	lis, err := net.Listen("tcp", ss.addr)
 	if err == nil {
 		rpcs := grpc.NewServer()
 		RegisterServerServer(rpcs, ss)

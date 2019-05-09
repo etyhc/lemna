@@ -4,7 +4,6 @@ import (
 	fmt "fmt"
 	"lemna/agent"
 	"lemna/agent/arpc"
-	"lemna/logger"
 )
 
 // Client 客户端rpc调用服务
@@ -45,37 +44,4 @@ func (c *Client) Recv() (*arpc.ForwardMsg, error) {
 // Cache 为客户端提供服务的服务器缓存
 func (c *Client) Cache() map[uint32]agent.STarget {
 	return c.cache
-}
-
-// Run 运行客户端转发功能，循环等待客户端消息并转发给服务器
-//       等待消息错误，返回
-//       在自己的缓存未找到转发服务器，再从转发服务器池寻找转发服务器，无视无转发服务器错误
-//       转发失败清除自己缓存的转发服务器
-//  pool 转发服务器池
-func (c *Client) Run(pool agent.TargetPool) error {
-	for {
-		fmsg, err := c.stream.Recv()
-		if err != nil {
-			return c.Error(err)
-		}
-
-		s, ok := c.cache[fmsg.Target]
-		if !ok {
-			s = pool.GetTarget(fmsg.Target).(agent.STarget)
-			if s == nil {
-				logger.Errorf("not find server<%d>", fmsg.Target)
-				continue
-			}
-		}
-
-		//转发指令
-		fmsg.Target = c.uid
-		err = s.Send(fmsg)
-		//转发失败
-		if err != nil {
-			logger.Error(s.Error(err))
-			delete(c.cache, s.ID())
-			continue
-		}
-	}
 }
