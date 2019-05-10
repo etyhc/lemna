@@ -11,7 +11,7 @@ import (
 
 // InterfaceIsNil 判断接口内容是否是空指针
 func InterfaceIsNil(i interface{}) bool {
-	if reflect.ValueOf(i).Kind() == reflect.Ptr && reflect.ValueOf(i).IsNil() {
+	if i == nil || reflect.ValueOf(i).Kind() == reflect.Ptr && reflect.ValueOf(i).IsNil() {
 		return true
 	}
 	return false
@@ -60,14 +60,18 @@ func ID32GenWithSalt(salt string) uint32 {
 	return hash
 }
 
+var _machash uint32
+
+func init() {
+	ifs, _ := net.Interfaces()
+	for _, i := range ifs {
+		_machash ^= HashFnv1a(i.HardwareAddr.String())
+	}
+}
+
 // ID32Gen 根据当前时间和机器mac地址生成32位ID，不保证一致性
 func ID32Gen() uint32 {
-	ifs, _ := net.Interfaces()
-	var hash uint32
-	for _, i := range ifs {
-		hash ^= HashFnv1a(i.HardwareAddr.String())
-	}
 	n := time.Now().UnixNano()
-	return uint32(n>>32) ^ uint32(n) ^ hash
+	return uint32(n>>32) ^ uint32(n) ^ _machash
 
 }
