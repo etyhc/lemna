@@ -21,8 +21,13 @@ const (
 	DEBUG       // DEBUG 调试日志
 )
 
-// levelStr 默认日志等级字串，表示此行日志等级
-var levelStr = [...]string{"", "ERR", "WAR", "INF", "DEB"}
+var (
+	// levelStr 默认日志等级字串，表示此行日志等级
+	levelStr = [...]string{"", "[E]", "[W]", "[I]", "[D]"}
+
+	//默认logger，只输出控制台
+	logger = &Logger{&samplePattern{}, DEBUG, "", nil}
+)
 
 func (level Level) String() string {
 	if level < 0 || int(level) >= len(levelStr) {
@@ -55,7 +60,7 @@ type Pattern interface {
 type samplePattern struct{}
 
 func (out *samplePattern) Format(level Level, a ...interface{}) string {
-	return fmt.Sprint(level, ": ", fmt.Sprint(a...))
+	return fmt.Sprint("\b\b\b\b", level, " ", fmt.Sprint(a...))
 }
 
 func (out *samplePattern) Roll() io.Writer {
@@ -117,12 +122,9 @@ func Error(a ...interface{}) {
 	output(ERROR, a...)
 }
 
-//默认logger，只输出控制台
-var logger = &Logger{&samplePattern{}, DEBUG, "", nil}
-
 func init() {
 	SetName(logger.name)
-	log.SetFlags(log.Ltime)
+	log.SetFlags(log.Ltime | log.Lmicroseconds)
 }
 
 func output(level Level, a ...interface{}) {
