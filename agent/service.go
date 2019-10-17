@@ -14,25 +14,23 @@ func init() {
 
 // Service 代理服务
 type Service struct {
-	sp TargetPool
-	cp TargetPool
+	stp TargetPool
+	ctp TargetPool
 }
 
 // NewService 新建代理服务
 //         sp 服务器池
 //         cp 客户端池
-func NewService(sp, cp TargetPool) *Service {
-	s := &Service{sp: sp, cp: cp}
-	s.sp.Bind(s.cp)
-	s.cp.Bind(s.sp)
+func NewService(stp, ctp TargetPool) *Service {
+	s := &Service{stp: stp, ctp: ctp}
 	return s
 }
 
 // Run 非阻塞运行服务器池，阻塞运行客户端池
 func (s *Service) Run() error {
 	go func() {
-		err := s.sp.Run()
+		err := s.stp.Run(s.ctp)
 		logger.Error(err)
 	}()
-	return s.cp.Run()
+	return s.ctp.Run(s.stp)
 }

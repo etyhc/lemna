@@ -4,7 +4,7 @@ package client
 import (
 	fmt "fmt"
 	"lemna/agent"
-	"lemna/agent/arpc"
+	"lemna/arpc"
 	"lemna/logger"
 	"net"
 	"strconv"
@@ -15,26 +15,22 @@ import (
 )
 
 // Service 代理服务，接受客户端连接，并验证
-//               将客户端消息转发给服务器并将服务器消息转发给客户端
+//         将客户端消息转发给服务器并将服务器消息转发给客户端
 type Service struct {
-	addr      string         //代理地址
-	token     Token          //Token
-	clientmgr *clientManager //客户端池
-	sp        agent.TargetPool
+	addr      string           //代理地址
+	token     Token            //Token
+	clientmgr *manager         //客户端管理器
+	sp        agent.TargetPool //服务器池
 }
 
 // NewService 新代理服务
 func NewService(addr string, t Token) *Service {
-	return &Service{addr: addr, token: t, clientmgr: newClientMananger()}
+	return &Service{addr: addr, token: t, clientmgr: newMananger()}
 }
 
 // GetTarget 目标池接口实现
 func (cs *Service) GetTarget(cid uint32) agent.Target {
-	ret := cs.clientmgr.getClient(cid)
-	if ret != nil {
-		return ret
-	}
-	return nil
+	return cs.clientmgr.getTarget(cid)
 }
 
 // Bind 目标池接口实现
@@ -70,7 +66,7 @@ func (cs *Service) Login(ctx context.Context, msg *arpc.LoginMsg) (*arpc.LoginMs
 
 // Forward rpc.ClientServer.Forward接口实现
 //         会验证消息头的session数据是否有效
-func (cs *Service) Forward(stream arpc.Client_ForwardServer) error {
+func (cs *Service) Forward(stream arpc.Crpc_ForwardServer) error {
 	md, ok := metadata.FromIncomingContext(stream.Context())
 	if !ok {
 		return fmt.Errorf("invalid rpc,no metadata")
@@ -86,21 +82,22 @@ func (cs *Service) Forward(stream arpc.Client_ForwardServer) error {
 		return err
 	}
 	//根据sessionid从client管理器初始化一个Client
-	client, err := cs.clientmgr.newClient(stream, uid)
+	client, err := cs.clientmgr.newTarget(stream, uid)
 	if err == nil {
-		err = agent.C2S(client, cs.sp)
-		cs.clientmgr.delClient(uid)
+		err = client.Forward(cs.sp)
+		cs.clientmgr.delTarget(uid)
 	}
 	return err
 }
 
 // Run 运行代理服务,接受客户端的连接
-func (cs *Service) Run() error {
+func (cs *Service) Run(sp agent.TargetPool) error {
+	cs.sp = sp
 	lis, err := net.Listen("tcp", cs.addr)
 	if err != nil {
 		return err
 	}
 	s := grpc.NewServer()
-	arpc.RegisterClientServer(s, cs)
+	arpc.RegisterCrpcServer(s, cs)
 	return s.Serve(lis)
 }

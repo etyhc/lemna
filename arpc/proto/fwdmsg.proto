@@ -1,0 +1,13 @@
+syntax = "proto3";
+package arpc;
+
+//====转发消息定义=====
+message RawMsg {
+  uint32 mid = 1;//消息ID，客户端和服务器协商确定，用于识别消息类型
+  bytes raw = 2;//proto消息
+}
+
+message ForwardMsg {
+  uint32 target = 1;//转发目标,服务器向客户端转发代表客户端ID，客户端向服务器转发代表服务器类型
+  RawMsg msg = 2;//被转发的消息
+}

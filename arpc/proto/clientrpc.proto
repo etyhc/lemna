@@ -1,0 +1,17 @@
+syntax = "proto3";
+
+import "fwdmsg.proto";
+package arpc;
+
+//客户端rpc及消息定义
+//=====================
+
+service Crpc {
+  rpc Login(LoginMsg) returns (LoginMsg) {}
+  rpc Forward(stream ForwardMsg) returns (stream ForwardMsg) {}
+  rpc Other(stream RawMsg) returns (stream RawMsg) {}
+}
+
+message LoginMsg {
+  string token = 1;
+}

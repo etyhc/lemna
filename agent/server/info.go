@@ -8,7 +8,7 @@ const (
 )
 
 // Info 服务器信息,用于代理发现服务器
-//           服务器启动后发布自己的信息给代理
+//      服务器启动后发布自己的信息给代理
 type Info struct {
 	Addr string `json:"addr"` //服务器地址
 	Type uint32 `json:"type"` //服务器类型

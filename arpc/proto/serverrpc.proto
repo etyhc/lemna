@@ -1,0 +1,28 @@
+syntax = "proto3";
+
+import "fwdmsg.proto";
+package arpc;
+
+//代理服务器与服务器交互rpc及消息定义
+//选择其中一种实现既可
+//=====================
+
+//游戏服务器作为rpc服务器，代理服务器作为客户端
+service Srpc {
+  rpc Forward (stream ForwardMsg) returns (stream ForwardMsg) {}
+  rpc Multicast (stream ForwardMsg) returns (stream MulticastMsg) {}
+  rpc Other(stream RawMsg) returns (stream RawMsg) {}
+}
+
+//代理服务器作为rpc服务器，游戏服务器作为客户端
+service Arpc {
+  rpc Forward (stream ForwardMsg) returns (stream ForwardMsg) {}
+  rpc Multicast (stream MulticastMsg) returns(stream ForwardMsg) {}
+  rpc Other(stream RawMsg) returns (stream RawMsg) {}
+}
+
+//服务器广播消息，代理服务器会将此消息从新封装成Forward消息转给客户端
+message MulticastMsg {
+  repeated uint32 targets = 1;
+  RawMsg msg = 2;
+}

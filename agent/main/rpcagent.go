@@ -25,7 +25,7 @@ func main() {
 		flag.Usage()
 		return
 	}
-	sp := server.NewSubServerPool(*configaddr)
+	sp := server.NewService(*configaddr)
 	cp := client.NewService(*addr, client.NewSimpleToken())
 	as := agent.NewService(sp, cp)
 	if err := as.Run(); err != nil {
