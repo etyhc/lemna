@@ -3,15 +3,19 @@ package server
 
 import (
 	"context"
+	"encoding/json"
+	"lemna/agent/server"
 	"lemna/arpc"
 	"lemna/logger"
 
 	"google.golang.org/grpc"
+	"google.golang.org/grpc/metadata"
 )
 
 //Srpc 服务器rpc封装
 type Srpc struct {
 	Addr    string //代理服务器地址
+	Info    server.Info
 	fstream arpc.Srpc_ForwardClient
 	mstream arpc.Srpc_MulticastClient
 	ostream arpc.Srpc_OtherClient
@@ -51,8 +55,15 @@ func (c *Srpc) Close() {
 //Connect 链接代理服务器
 //        并发起Forward、Multicast、Other 远程调用
 func (c *Srpc) Connect() error {
+	b, err := json.Marshal(c.Info)
+	if err != nil {
+		return err
+	}
+	ctx := metadata.NewOutgoingContext(
+		context.Background(),
+		metadata.Pairs("info", string(b)))
+
 	//连接
-	var err error
 	c.conn, err = grpc.Dial(c.Addr,
 		grpc.WithInsecure(),
 		grpc.WithBlock())
@@ -61,7 +72,6 @@ func (c *Srpc) Connect() error {
 	}
 	//rpc客户端
 	ac := arpc.NewSrpcClient(c.conn)
-	ctx := context.Background()
 	//发起rpc调用
 	if err == nil {
 		c.fstream, err = ac.Forward(ctx)

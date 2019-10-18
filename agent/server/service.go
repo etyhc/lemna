@@ -2,11 +2,15 @@
 package server
 
 import (
+	"context"
+	"encoding/json"
+	"fmt"
 	"lemna/agent"
 	"lemna/arpc"
 	"net"
 
 	grpc "google.golang.org/grpc"
+	"google.golang.org/grpc/metadata"
 )
 
 // Service 代理rpc服务，接受服务器连接
@@ -39,28 +43,42 @@ func NewService(addr string) *Service {
 	return &Service{addr: addr, schers: make(map[uint32]scher)}
 }
 
-func (s *Service) Update(server *Server) {
-	scher, isInited := s.schers[server.target.ID()]
-	if !isInited {
-		//TODO 初始化一个调度器
+//从header中获取server info
+func getInfo(ctx context.Context) (Info, error) {
+	var info Info
+	md, ok := metadata.FromIncomingContext(ctx)
+	if !ok {
+		return info, fmt.Errorf("invalid rpc,no metadata")
 	}
-	scher.up(server)
+	is, ok := md["info"]
+	if !ok {
+		return info, fmt.Errorf("invalid server, no info")
+	}
+	err := json.Unmarshal([]byte(is[0]), &info)
+	return info, err
 }
 
 // Forward arpc.ArpcServer.Forward接口实现
 func (s *Service) Forward(stream arpc.Srpc_ForwardServer) error {
-	var info Info
-	ft := NewFTarget(stream, &info)
-	return ft.Forward(s.ctp)
+	info, err := getInfo(stream.Context())
+	if err != nil {
+		return err
+	}
+	return NewFTarget(stream, info).Forward(s.ctp)
 }
 
 // Multicast arpc.ArpcServer.Multicast接口实现
 func (s *Service) Multicast(stream arpc.Srpc_MulticastServer) error {
-	return NewMTarget(stream).Forward(s.ctp)
+	info, err := getInfo(stream.Context())
+	if err != nil {
+		return err
+	}
+	return NewMTarget(stream, info).Forward(s.ctp)
 }
 
-// Multicast arpc.ArpcServer.Multicast接口实现
+// Other arpc.ArpcServer.Other接口实现
 func (s *Service) Other(stream arpc.Srpc_OtherServer) error {
+	//TODO 待实现
 	return nil
 }
 
