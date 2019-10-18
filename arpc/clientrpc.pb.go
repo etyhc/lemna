@@ -70,17 +70,18 @@ func init() {
 func init() { proto.RegisterFile("clientrpc.proto", fileDescriptor_b1249944c579c2db) }
 
 var fileDescriptor_b1249944c579c2db = []byte{
-	// 146 bytes of a gzipped FileDescriptorProto
+	// 167 bytes of a gzipped FileDescriptorProto
 	0x1f, 0x8b, 0x08, 0x00, 0x00, 0x00, 0x00, 0x00, 0x02, 0xff, 0xe2, 0xe2, 0x4f, 0xce, 0xc9, 0x4c,
 	0xcd, 0x2b, 0x29, 0x2a, 0x48, 0xd6, 0x2b, 0x28, 0xca, 0x2f, 0xc9, 0x17, 0x62, 0x49, 0x2c, 0x2a,
 	0x48, 0x96, 0xe2, 0x49, 0x2b, 0x4f, 0xc9, 0x2d, 0x4e, 0x87, 0x88, 0x29, 0x29, 0x70, 0x71, 0xf8,
 	0xe4, 0xa7, 0x67, 0xe6, 0xf9, 0x16, 0xa7, 0x0b, 0x89, 0x70, 0xb1, 0x96, 0xe4, 0x67, 0xa7, 0xe6,
-	0x49, 0x30, 0x2a, 0x30, 0x6a, 0x70, 0x06, 0x41, 0x38, 0x46, 0x69, 0x5c, 0x2c, 0xce, 0x45, 0x05,
-	0xc9, 0x42, 0x9a, 0x5c, 0xac, 0x60, 0x95, 0x42, 0x7c, 0x7a, 0x20, 0x73, 0xf4, 0x60, 0xda, 0xa4,
-	0xd0, 0xf8, 0x4a, 0x0c, 0x42, 0xc6, 0x5c, 0xec, 0x6e, 0xf9, 0x45, 0xe5, 0x89, 0x45, 0x29, 0x42,
-	0x02, 0x10, 0x49, 0x28, 0x17, 0xa4, 0x1c, 0x43, 0x44, 0x89, 0x41, 0x83, 0xd1, 0x80, 0x31, 0x89,
-	0x0d, 0xec, 0x20, 0x63, 0x40, 0x00, 0x00, 0x00, 0xff, 0xff, 0xc9, 0xc7, 0x69, 0xe1, 0xb7, 0x00,
-	0x00, 0x00,
+	0x49, 0x30, 0x2a, 0x30, 0x6a, 0x70, 0x06, 0x41, 0x38, 0x46, 0x13, 0x19, 0xb9, 0x58, 0x9c, 0x8b,
+	0x0a, 0x92, 0x85, 0x34, 0xb9, 0x58, 0xc1, 0x4a, 0x85, 0xf8, 0xf4, 0x40, 0x06, 0xe9, 0xc1, 0xf4,
+	0x49, 0xa1, 0xf1, 0x95, 0x18, 0x84, 0x8c, 0xb9, 0xd8, 0xdd, 0xf2, 0x8b, 0xca, 0x13, 0x8b, 0x52,
+	0x84, 0x04, 0x20, 0x92, 0x50, 0x2e, 0x48, 0x39, 0x86, 0x88, 0x12, 0x83, 0x06, 0xa3, 0x01, 0x23,
+	0xc8, 0x7c, 0xff, 0x92, 0x8c, 0xd4, 0x22, 0x21, 0x1e, 0x88, 0x82, 0xa0, 0xc4, 0x72, 0x90, 0x72,
+	0x14, 0x1e, 0x44, 0x69, 0x12, 0x1b, 0xd8, 0xf1, 0xc6, 0x80, 0x00, 0x00, 0x00, 0xff, 0xff, 0x2a,
+	0x36, 0x50, 0xcd, 0xe3, 0x00, 0x00, 0x00,
 }
 
 // Reference imports to suppress errors if they are not otherwise used.
@@ -95,8 +96,12 @@ const _ = grpc.SupportPackageIsVersion4
 //
 // For semantics around ctx use and closing/ending streaming RPCs, please refer to https://godoc.org/google.golang.org/grpc#ClientConn.NewStream.
 type CrpcClient interface {
+	//客户端登陆代理
 	Login(ctx context.Context, in *LoginMsg, opts ...grpc.CallOption) (*LoginMsg, error)
+	//客户端发送、接收服务器的消息
 	Forward(ctx context.Context, opts ...grpc.CallOption) (Crpc_ForwardClient, error)
+	//客户端与代理交互rpc
+	Other(ctx context.Context, opts ...grpc.CallOption) (Crpc_OtherClient, error)
 }
 
 type crpcClient struct {
@@ -147,10 +152,45 @@ func (x *crpcForwardClient) Recv() (*ForwardMsg, error) {
 	return m, nil
 }
 
+func (c *crpcClient) Other(ctx context.Context, opts ...grpc.CallOption) (Crpc_OtherClient, error) {
+	stream, err := c.cc.NewStream(ctx, &_Crpc_serviceDesc.Streams[1], "/arpc.Crpc/Other", opts...)
+	if err != nil {
+		return nil, err
+	}
+	x := &crpcOtherClient{stream}
+	return x, nil
+}
+
+type Crpc_OtherClient interface {
+	Send(*RawMsg) error
+	Recv() (*RawMsg, error)
+	grpc.ClientStream
+}
+
+type crpcOtherClient struct {
+	grpc.ClientStream
+}
+
+func (x *crpcOtherClient) Send(m *RawMsg) error {
+	return x.ClientStream.SendMsg(m)
+}
+
+func (x *crpcOtherClient) Recv() (*RawMsg, error) {
+	m := new(RawMsg)
+	if err := x.ClientStream.RecvMsg(m); err != nil {
+		return nil, err
+	}
+	return m, nil
+}
+
 // CrpcServer is the server API for Crpc service.
 type CrpcServer interface {
+	//客户端登陆代理
 	Login(context.Context, *LoginMsg) (*LoginMsg, error)
+	//客户端发送、接收服务器的消息
 	Forward(Crpc_ForwardServer) error
+	//客户端与代理交互rpc
+	Other(Crpc_OtherServer) error
 }
 
 // UnimplementedCrpcServer can be embedded to have forward compatible implementations.
@@ -162,6 +202,9 @@ func (*UnimplementedCrpcServer) Login(ctx context.Context, req *LoginMsg) (*Logi
 }
 func (*UnimplementedCrpcServer) Forward(srv Crpc_ForwardServer) error {
 	return status.Errorf(codes.Unimplemented, "method Forward not implemented")
+}
+func (*UnimplementedCrpcServer) Other(srv Crpc_OtherServer) error {
+	return status.Errorf(codes.Unimplemented, "method Other not implemented")
 }
 
 func RegisterCrpcServer(s *grpc.Server, srv CrpcServer) {
@@ -212,6 +255,32 @@ func (x *crpcForwardServer) Recv() (*ForwardMsg, error) {
 	return m, nil
 }
 
+func _Crpc_Other_Handler(srv interface{}, stream grpc.ServerStream) error {
+	return srv.(CrpcServer).Other(&crpcOtherServer{stream})
+}
+
+type Crpc_OtherServer interface {
+	Send(*RawMsg) error
+	Recv() (*RawMsg, error)
+	grpc.ServerStream
+}
+
+type crpcOtherServer struct {
+	grpc.ServerStream
+}
+
+func (x *crpcOtherServer) Send(m *RawMsg) error {
+	return x.ServerStream.SendMsg(m)
+}
+
+func (x *crpcOtherServer) Recv() (*RawMsg, error) {
+	m := new(RawMsg)
+	if err := x.ServerStream.RecvMsg(m); err != nil {
+		return nil, err
+	}
+	return m, nil
+}
+
 var _Crpc_serviceDesc = grpc.ServiceDesc{
 	ServiceName: "arpc.Crpc",
 	HandlerType: (*CrpcServer)(nil),
@@ -225,6 +294,12 @@ var _Crpc_serviceDesc = grpc.ServiceDesc{
 		{
 			StreamName:    "Forward",
 			Handler:       _Crpc_Forward_Handler,
+			ServerStreams: true,
+			ClientStreams: true,
+		},
+		{
+			StreamName:    "Other",
+			Handler:       _Crpc_Other_Handler,
 			ServerStreams: true,
 			ClientStreams: true,
 		},

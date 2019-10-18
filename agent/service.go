@@ -22,8 +22,7 @@ type Service struct {
 //         sp 服务器池
 //         cp 客户端池
 func NewService(stp, ctp TargetPool) *Service {
-	s := &Service{stp: stp, ctp: ctp}
-	return s
+	return &Service{stp: stp, ctp: ctp}
 }
 
 // Run 非阻塞运行服务器池，阻塞运行客户端池

@@ -3,8 +3,8 @@ package arpc;
 
 //====转发消息定义=====
 message RawMsg {
-  uint32 mid = 1;//消息ID，客户端和服务器协商确定，用于识别消息类型
-  bytes raw = 2;//proto消息
+  uint32 mid = 1;//消息ID，客户端和服务器协商确定，用于识别消息
+  bytes raw = 2;//序列化后的消息
 }
 
 message ForwardMsg {

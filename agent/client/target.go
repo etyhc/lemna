@@ -26,7 +26,7 @@ func (t *Target) ID() uint32 {
 	return t.uid
 }
 
-func (t *Target) Error(err error) error {
+func (t *Target) wraperr(err error) error {
 	return fmt.Errorf("<uid=%d>%w", t.uid, err)
 }
 
@@ -43,7 +43,7 @@ func (t *Target) Forward(pool agent.TargetPool) error {
 			for _, server := range t.cache {
 				agent.InvalidTarget(server, t.uid)
 			}
-			return t.Error(err)
+			return t.wraperr(err)
 		}
 
 		server, isCached := t.cache[fmsg.Target]

@@ -48,15 +48,20 @@ func (s *Service) Update(server *Server) {
 }
 
 // Forward arpc.ArpcServer.Forward接口实现
-func (s *Service) Forward(stream arpc.Arpc_ForwardServer) error {
+func (s *Service) Forward(stream arpc.Srpc_ForwardServer) error {
 	var info Info
 	ft := NewFTarget(stream, &info)
 	return ft.Forward(s.ctp)
 }
 
 // Multicast arpc.ArpcServer.Multicast接口实现
-func (s *Service) Multicast(stream arpc.Arpc_MulticastServer) error {
+func (s *Service) Multicast(stream arpc.Srpc_MulticastServer) error {
 	return NewMTarget(stream).Forward(s.ctp)
+}
+
+// Multicast arpc.ArpcServer.Multicast接口实现
+func (s *Service) Other(stream arpc.Srpc_OtherServer) error {
+	return nil
 }
 
 // Run 运行代理服务,接受服务器的连接
@@ -67,6 +72,6 @@ func (s *Service) Run(ctp agent.TargetPool) error {
 		return err
 	}
 	gs := grpc.NewServer()
-	arpc.RegisterArpcServer(gs, s)
+	arpc.RegisterSrpcServer(gs, s)
 	return gs.Serve(lis)
 }

@@ -9,14 +9,14 @@ import (
 
 // MTarget rpc代理端(代理服务器作为rpc服务器)
 type MTarget struct {
-	stream arpc.Arpc_MulticastServer //Forward调用接收、发送端
+	stream arpc.Srpc_MulticastServer //Forward调用接收、发送端
 	info   *Info                     //服务器信息
 }
 
 // NewMTarget 新服务器
 //    client rpc客户端
 //      info 订阅的服务器信息
-func NewMTarget(stream arpc.Arpc_MulticastServer) *MTarget {
+func NewMTarget(stream arpc.Srpc_MulticastServer) *MTarget {
 	return &MTarget{stream: stream}
 }
 

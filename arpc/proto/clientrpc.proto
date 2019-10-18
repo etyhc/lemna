@@ -7,8 +7,11 @@ package arpc;
 //=====================
 
 service Crpc {
+  //客户端登陆代理
   rpc Login(LoginMsg) returns (LoginMsg) {}
+  //客户端发送、接收服务器的消息
   rpc Forward(stream ForwardMsg) returns (stream ForwardMsg) {}
+  //客户端与代理交互rpc
   rpc Other(stream RawMsg) returns (stream RawMsg) {}
 }
 

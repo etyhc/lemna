@@ -21,7 +21,6 @@ var _ = math.Inf
 const _ = proto.ProtoPackageIsVersion3 // please upgrade the proto package
 
 //====转发消息定义=====
-//默认是raw消息的名字的hash值,采用hash算法是32-bit FNV-1a,
 type RawMsg struct {
 	Mid                  uint32   `protobuf:"varint,1,opt,name=mid,proto3" json:"mid,omitempty"`
 	Raw                  []byte   `protobuf:"bytes,2,opt,name=raw,proto3" json:"raw,omitempty"`

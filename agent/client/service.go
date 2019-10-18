@@ -64,30 +64,47 @@ func (cs *Service) Login(ctx context.Context, msg *arpc.LoginMsg) (*arpc.LoginMs
 
 }
 
-// Forward rpc.ClientServer.Forward接口实现
-//         会验证消息头的session数据是否有效
-func (cs *Service) Forward(stream arpc.Crpc_ForwardServer) error {
-	md, ok := metadata.FromIncomingContext(stream.Context())
+func getUID(ctx context.Context, token Token) (uint32, error) {
+	md, ok := metadata.FromIncomingContext(ctx)
 	if !ok {
-		return fmt.Errorf("invalid rpc,no metadata")
+		return 0, fmt.Errorf("invalid rpc,no metadata")
 	}
 	session, ok := md["session"]
 	if !ok {
-		return fmt.Errorf("invalid client,no session")
+		return 0, fmt.Errorf("invalid client,no session")
 	}
 	logger.Debug(session)
 	tmp, _ := strconv.Atoi(session[0])
-	uid, err := cs.token.GetUID(uint32(tmp))
+	return token.GetUID(uint32(tmp))
+}
+
+// Forward rpc.ClientServer.Forward接口实现
+//         会验证消息头的session数据是否有效
+func (cs *Service) Forward(stream arpc.Crpc_ForwardServer) error {
+	uid, err := getUID(stream.Context(), cs.token)
 	if err != nil {
 		return err
 	}
-	//根据sessionid从client管理器初始化一个Client
+	//根据uid从client管理器初始化一个Client
 	client, err := cs.clientmgr.newTarget(stream, uid)
 	if err == nil {
 		err = client.Forward(cs.sp)
 		cs.clientmgr.delTarget(uid)
 	}
 	return err
+}
+
+// Other rpc.ClientServer.Other接口实现
+//       会验证消息头的session数据是否有效
+func (cs *Service) Other(stream arpc.Crpc_OtherServer) error {
+	uid, err := getUID(stream.Context(), cs.token)
+	if err != nil {
+		return err
+	}
+	//TODO
+	//根据uid得到用户
+	_ = cs.clientmgr.getTarget(uid)
+	return nil
 }
 
 // Run 运行代理服务,接受客户端的连接
