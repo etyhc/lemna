@@ -7,6 +7,7 @@ import (
 	"fmt"
 	"lemna/agent"
 	"lemna/arpc"
+	"lemna/logger"
 	"net"
 
 	grpc "google.golang.org/grpc"
@@ -64,6 +65,7 @@ func (s *Service) Forward(stream arpc.Srpc_ForwardServer) error {
 	if err != nil {
 		return err
 	}
+	logger.Infof("Server(%d) Connected.", info.Type)
 	return NewFTarget(stream, info).Forward(s.ctp)
 }
 
@@ -91,5 +93,6 @@ func (s *Service) Run(ctp agent.TargetPool) error {
 	}
 	gs := grpc.NewServer()
 	arpc.RegisterSrpcServer(gs, s)
+	logger.Infof("Start server service at %s", s.addr)
 	return gs.Serve(lis)
 }

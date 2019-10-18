@@ -9,12 +9,8 @@ import (
 //        MsgProc处理消息时会将消息流代入消息回调函数，以便消息回复.
 //        这个接口只有一个用处，让服务器程序写游戏客户端测试代码能够复用msgproc代码
 type Stream interface {
-	// Multicast 服务器指定客户端广播消息
-	Multicast([]uint32, interface{}) error
 	// Forward 向服务器或者客户端转发消息
-	Forward(uint32, interface{}) error
-	// ID 消息流唯一ID
-	ID() uint32
+	Send(uint32, interface{}) error
 }
 
 // Handler 是个消息回调函数，需要实现，并注册到MsgCenter

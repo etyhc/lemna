@@ -85,7 +85,7 @@ func (c *Srpc) Connect() error {
 	if err != nil {
 		c.conn.Close()
 	} else {
-		logger.Info("agent is alive.")
+		logger.Infof("Connect agent(%s) success.", c.Addr)
 	}
 	return err
 }

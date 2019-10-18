@@ -5,18 +5,17 @@ import (
 	"lemna/agent"
 	"lemna/agent/client"
 	"lemna/agent/server"
-	"lemna/content/crpc"
 	"lemna/logger"
 )
 
 func init() {
-	addr = flag.String("addr", ":9999", "要绑定的地址")
-	configaddr = flag.String("config", crpc.SERVERADDR, "订阅服务器地址")
+	caddr = flag.String("caddr", ":9999", "crpc地址要绑定的地址")
+	saddr = flag.String("saddr", ":10000", "srpc地址要绑定的地址")
 	h = flag.Bool("h", false, "this help")
 }
 
-var addr *string
-var configaddr *string
+var caddr *string
+var saddr *string
 var h *bool
 
 func main() {
@@ -25,8 +24,8 @@ func main() {
 		flag.Usage()
 		return
 	}
-	sp := server.NewService(*configaddr)
-	cp := client.NewService(*addr, client.NewSimpleToken())
+	sp := server.NewService(*saddr)
+	cp := client.NewService(*caddr, client.NewSimpleToken())
 	as := agent.NewService(sp, cp)
 	if err := as.Run(); err != nil {
 		logger.Error(err)

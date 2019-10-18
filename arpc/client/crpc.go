@@ -4,6 +4,7 @@ package client
 import (
 	"context"
 	"lemna/arpc"
+	"time"
 
 	"google.golang.org/grpc"
 	"google.golang.org/grpc/metadata"
@@ -66,12 +67,14 @@ func (crpc *Crpc) Login() error {
 	crpc.conn, err = grpc.Dial(crpc.Addr,
 		grpc.WithInsecure(),
 		grpc.WithBlock(),
-		grpc.WithPerRPCCredentials(crpc))
+		grpc.WithPerRPCCredentials(crpc),
+		grpc.WithTimeout(time.Second*3))
 	if err != nil {
 		return err
 	}
 	//rpc客户端
 	crpc.client = arpc.NewCrpcClient(crpc.conn)
+	crpc.ctx = context.Background()
 	//登录rpc调用
 	_, err = crpc.client.Login(crpc.ctx, &arpc.LoginMsg{Token: crpc.Token}, grpc.Header(&crpc.header))
 	if err == nil {

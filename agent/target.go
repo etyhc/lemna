@@ -22,7 +22,7 @@ type TargetPool interface {
 
 // InvalidTarget 通知src，dest是无效目标
 func InvalidTarget(src Target, dest uint32) {
-	_ = src.Send(MsgWrapper(msgkits.Builder.InvalidTarget(), dest))
+	//TODO _ = src.Send(MsgWrapper(msgkits.Builder.InvalidTarget(), dest))
 }
 
 // T2T 转发功能封装

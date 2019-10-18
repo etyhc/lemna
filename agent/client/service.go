@@ -73,7 +73,6 @@ func getUID(ctx context.Context, token Token) (uint32, error) {
 	if !ok {
 		return 0, fmt.Errorf("invalid client,no session")
 	}
-	logger.Debug(session)
 	tmp, _ := strconv.Atoi(session[0])
 	return token.GetUID(uint32(tmp))
 }
@@ -85,12 +84,14 @@ func (cs *Service) Forward(stream arpc.Crpc_ForwardServer) error {
 	if err != nil {
 		return err
 	}
+	logger.Infof("<uid=%d> Logining", uid)
 	//根据uid从client管理器初始化一个Client
 	client, err := cs.clientmgr.newTarget(stream, uid)
 	if err == nil {
 		err = client.Forward(cs.sp)
 		cs.clientmgr.delTarget(uid)
 	}
+	logger.Errorf("%s", err)
 	return err
 }
 
@@ -116,5 +117,6 @@ func (cs *Service) Run(sp agent.TargetPool) error {
 	}
 	s := grpc.NewServer()
 	arpc.RegisterCrpcServer(s, cs)
+	logger.Infof("Start client service at %s", cs.addr)
 	return s.Serve(lis)
 }
