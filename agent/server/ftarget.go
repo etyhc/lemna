@@ -10,19 +10,19 @@ import (
 // FTarget rpc代理端(代理服务器作为rpc服务器)
 type FTarget struct {
 	stream arpc.Srpc_ForwardServer //Forward调用接收、发送端
-	info   Info                    //服务器信息
+	_info  Info                    //服务器信息
 }
 
 // NewFTarget 新服务器
 //    client rpc客户端
 //      info 订阅的服务器信息
 func NewFTarget(stream arpc.Srpc_ForwardServer, info Info) *FTarget {
-	return &FTarget{stream: stream, info: info}
+	return &FTarget{stream: stream, _info: info}
 }
 
 func (ft *FTarget) wrapErr(err error) error {
 	if err != nil {
-		return fmt.Errorf("<type=%d>%w", ft.info.Type, err)
+		return fmt.Errorf("<type=%d>%w", ft._info.Type, err)
 	}
 	return nil
 }
@@ -34,7 +34,11 @@ func (ft *FTarget) Send(msg *arpc.ForwardMsg) error {
 
 // ID 服务器类型ID
 func (ft *FTarget) ID() uint32 {
-	return ft.info.Type
+	return ft._info.Type
+}
+
+func (ft *FTarget) info() *Info {
+	return &ft._info
 }
 
 func (ft *FTarget) Forward(pool agent.TargetPool) error {

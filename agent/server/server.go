@@ -2,7 +2,7 @@ package server
 
 import "lemna/agent"
 
-type Server struct {
-	target agent.Target
-	info   *Info
+type Server interface {
+	agent.Target
+	info() *Info
 }

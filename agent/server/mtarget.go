@@ -10,14 +10,14 @@ import (
 // MTarget rpc代理端(代理服务器作为rpc服务器)
 type MTarget struct {
 	stream arpc.Srpc_MulticastServer //Forward调用接收、发送端
-	info   Info                      //服务器信息
+	_info  Info                      //服务器信息
 }
 
 // NewMTarget 新服务器
 //    client rpc客户端
 //      info 订阅的服务器信息
 func NewMTarget(stream arpc.Srpc_MulticastServer, info Info) *MTarget {
-	return &MTarget{stream: stream, info: info}
+	return &MTarget{stream: stream, _info: info}
 }
 
 // Send 发送转发消息给服务器
@@ -28,7 +28,11 @@ func (mt *MTarget) Send(msg *arpc.ForwardMsg) error {
 // ID Target接口实现
 //    服务器类型ID
 func (mt *MTarget) ID() uint32 {
-	return mt.info.Type
+	return mt._info.Type
+}
+
+func (mt *MTarget) info() *Info {
+	return &mt._info
 }
 
 //Forward Target接口实现
@@ -36,7 +40,7 @@ func (mt *MTarget) Forward(pool agent.TargetPool) error {
 	for {
 		mmsg, err := mt.stream.Recv()
 		if err != nil {
-			return fmt.Errorf("<type=%d>%w", mt.info.Type, err)
+			return fmt.Errorf("<type=%d>%w", mt._info.Type, err)
 		}
 
 		for _, cid := range mmsg.Targets {

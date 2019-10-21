@@ -48,7 +48,7 @@ func (t *Target) Forward(pool agent.TargetPool) error {
 
 		server, isCached := t.cache[fmsg.Target]
 		if !isCached {
-			server := pool.GetTarget(fmsg.Target)
+			server = pool.GetTarget(fmsg.Target)
 			if server == nil { //目标服务器无效,丢弃这次数据
 				agent.InvalidTarget(t, fmsg.Target)
 				logger.Errorf("not find server<%d>", fmsg.Target)
@@ -57,6 +57,7 @@ func (t *Target) Forward(pool agent.TargetPool) error {
 		}
 
 		//转发指令
+		//logger.Debugf("forward server=%v", server)
 		err = agent.T2T(t, server, fmsg)
 		if err != nil { //转发失败
 			logger.Error(err)

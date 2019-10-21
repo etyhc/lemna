@@ -21,20 +21,34 @@ type Service struct {
 	schers map[uint32]scher
 }
 
-type scher interface {
-	get(uint32) *Server
-	sche() *Server
-	del(uint32)
-	up(*Server)
+func (s *Service) add(ser Server) {
+	id := ser.ID()
+	ls, ok := s.schers[id]
+	if !ok {
+		switch ser.info().Sche {
+		case SERVERSCHENIL:
+			s.schers[id] = newNilScher()
+		case SERVERSCHELOAD:
+			s.schers[id] = newLoadScher()
+		case SERVERSCHEROUND:
+			s.schers[id] = newRoundScher()
+		}
+		ls, ok = s.schers[id]
+	}
+	ls.add(ser)
 }
 
-// GetTarget 服务器池接口实现
+func (s *Service) del(ser Server) {
+	sche, ok := s.schers[ser.ID()]
+	if ok {
+		sche.del(ser)
+	}
+}
+
+//GetTarget 服务器池接口实现
 func (s *Service) GetTarget(target uint32) agent.Target {
 	if scher, ok := s.schers[target]; ok {
-		server := scher.sche()
-		if server != nil {
-			return server.target
-		}
+		return scher.sche()
 	}
 	return nil
 }
@@ -65,8 +79,10 @@ func (s *Service) Forward(stream arpc.Srpc_ForwardServer) error {
 	if err != nil {
 		return err
 	}
-	logger.Infof("Server(%d) Connected.", info.Type)
-	return NewFTarget(stream, info).Forward(s.ctp)
+	target := NewFTarget(stream, info)
+	s.add(target)
+	logger.Infof("Server%v Connected.", *target)
+	return target.Forward(s.ctp)
 }
 
 // Multicast arpc.ArpcServer.Multicast接口实现
