@@ -7,7 +7,6 @@ import (
 	"lemna/arpc"
 	"lemna/logger"
 	"net"
-	"strconv"
 
 	context "golang.org/x/net/context"
 	grpc "google.golang.org/grpc"
@@ -33,11 +32,6 @@ func (cs *Service) GetTarget(cid uint32) agent.Target {
 	return cs.clientmgr.getTarget(cid)
 }
 
-// Bind 目标池接口实现
-func (cs *Service) Bind(sp agent.TargetPool) {
-	cs.sp = sp
-}
-
 // Login rpc.ClientServer.Login接口实现
 //       根据token分配唯一sessionid，并将此ID通过消息头返回给客户端
 //       客户端调用Forward时应将此头返回给服务器
@@ -51,12 +45,12 @@ func (cs *Service) Login(ctx context.Context, msg *arpc.LoginMsg) (*arpc.LoginMs
 		return nil, fmt.Errorf("invalid client,no token")
 	}
 	//通过验证从ctx中获得sessionid
-	sessionid, err := cs.token.GetSessionID(token[0])
+	session, err := cs.token.GetSession(token[0])
 	if err != nil {
 		return nil, err
 	}
 	//将session返回给客户端，客户端每次RPC调用都应将此session放入head中
-	err = grpc.SetHeader(ctx, metadata.Pairs("session", fmt.Sprint(sessionid)))
+	err = grpc.SetHeader(ctx, metadata.Pairs("session", session))
 	if err != nil {
 		return nil, err
 	}
@@ -73,8 +67,7 @@ func getUID(ctx context.Context, token Token) (uint32, error) {
 	if !ok {
 		return 0, fmt.Errorf("invalid client,no session")
 	}
-	tmp, _ := strconv.Atoi(session[0])
-	return token.GetUID(uint32(tmp))
+	return token.GetUID(session[0])
 }
 
 // Forward rpc.ClientServer.Forward接口实现

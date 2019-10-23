@@ -59,6 +59,7 @@ func (t *Target) Forward(pool agent.TargetPool) error {
 		//转发指令
 		//logger.Debugf("forward server=%v", server)
 		err = agent.T2T(t, server, fmsg)
+		//维护服务器缓存
 		if err != nil { //转发失败
 			logger.Error(err)
 			if isCached {

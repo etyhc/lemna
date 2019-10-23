@@ -31,6 +31,10 @@ func (mt *MTarget) ID() uint32 {
 	return mt._info.Type
 }
 
+//Bind 接口实现
+func (mt *MTarget) Bind(agent.Target) {
+}
+
 func (mt *MTarget) info() *Info {
 	return &mt._info
 }

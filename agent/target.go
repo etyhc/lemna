@@ -11,6 +11,7 @@ type Target interface {
 	// ID 目标ID，客户端是UID，服务器端只是代表服务器类型
 	//    代理连接很多同类型服务器，但同类型服务器只有一个为客户端服务
 	ID() uint32
+	Bind(Target)
 }
 
 // TargetPool 目标池

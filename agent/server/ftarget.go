@@ -37,10 +37,15 @@ func (ft *FTarget) ID() uint32 {
 	return ft._info.Type
 }
 
+//Bind 接口实现
+func (ft *FTarget) Bind(agent.Target) {
+}
+
 func (ft *FTarget) info() *Info {
 	return &ft._info
 }
 
+//Forward agent.Target接口实现
 func (ft *FTarget) Forward(pool agent.TargetPool) error {
 	for {
 		fmsg, err := ft.stream.Recv()
@@ -56,6 +61,9 @@ func (ft *FTarget) Forward(pool agent.TargetPool) error {
 			err = agent.T2T(ft, client, fmsg)
 			if err != nil { //转发失败
 				logger.Error(err)
+			} else {
+				//刷新客户端服务器缓冲
+				client.Bind(ft)
 			}
 		}
 	}
