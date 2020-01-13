@@ -28,8 +28,8 @@ func (pi ProtoInfo) Name() string {
 type ProtoHelper struct {
 }
 
-//BaseInfo Helper的Protobuf实现
-func (ph ProtoHelper) BaseInfo(msg interface{}) BaseInfo {
+//Extract Helper的Protobuf实现
+func (ph ProtoHelper) Extract(msg interface{}) Info {
 	elem := reflect.TypeOf(msg).Elem()
 	return ProtoInfo{id: utils.HashFnv1a(elem.Name()), name: elem.Name(), elem: elem}
 }
@@ -40,7 +40,7 @@ func (ph ProtoHelper) ToRaw(msg interface{}) ([]byte, error) {
 }
 
 //FromRaw Helper的Protobuf实现
-func (ph ProtoHelper) FromRaw(info BaseInfo, raw []byte) (interface{}, error) {
+func (ph ProtoHelper) FromRaw(info Info, raw []byte) (interface{}, error) {
 	msg := reflect.New(info.(ProtoInfo).elem).Interface()
 	err := proto.Unmarshal(raw, msg.(proto.Message))
 	return msg, err

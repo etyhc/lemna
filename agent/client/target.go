@@ -53,6 +53,8 @@ func (t *Target) Forward(pool agent.TargetPool) error {
 				agent.InvalidTarget(t, fmsg.Target)
 				logger.Errorf("not find server<%d>", fmsg.Target)
 				continue
+			} else {
+				t.cache[server.ID()] = server
 			}
 		}
 
@@ -62,13 +64,7 @@ func (t *Target) Forward(pool agent.TargetPool) error {
 		//维护服务器缓存
 		if err != nil { //转发失败
 			logger.Error(err)
-			if isCached {
-				delete(t.cache, server.ID())
-			}
-		} else {
-			if !isCached {
-				t.cache[server.ID()] = server
-			}
+			delete(t.cache, server.ID())
 		}
 	}
 }

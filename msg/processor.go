@@ -19,26 +19,25 @@ type Stream interface {
 //     Stream 消息来源流，用于回复
 type Handler func(uint32, interface{}, Stream)
 
-//BaseInfo 消息基本信息
-type BaseInfo interface {
+//Info 消息基本信息
+type Info interface {
 	ID() uint32   //消息ID，用于区分不同消息，客户端和服务器协商确定
 	Name() string //消息名字
 }
 
 //Helper 消息辅助接口，不同消息协议自行实现
 type Helper interface {
-	//BaseInfo 得到消息基本信息
-	BaseInfo(interface{}) BaseInfo
+	//Extract 提取消息基本信息
+	Extract(interface{}) Info
 	//ToRaw 序列化消息
 	ToRaw(interface{}) ([]byte, error)
 	//FromRaw 反序列化消息
-	FromRaw(BaseInfo, []byte) (interface{}, error)
-	//Agent 代理服务器自定义消息接口
+	FromRaw(Info, []byte) (interface{}, error)
 }
 
 type msgInfo struct {
-	baseinfo BaseInfo
-	handler  Handler
+	info    Info
+	handler Handler
 }
 
 /*Processor 消息处理器,封装消息工具*/
@@ -58,12 +57,12 @@ func NewProcessor(helper Helper) *Processor {
 //     msg 被注册的消息
 // handler 消息处理函数
 func (mp *Processor) Reg(msg interface{}, handler Handler) {
-	nmi := msgInfo{baseinfo: mp.helper.BaseInfo(msg), handler: handler}
-	if omi, ok := mp.infos[nmi.baseinfo.ID()]; ok {
+	nmi := msgInfo{info: mp.helper.Extract(msg), handler: handler}
+	if omi, ok := mp.infos[nmi.info.ID()]; ok {
 		panic(fmt.Sprintf("MsgInfo ID(%d) conflict %s %s",
-			nmi.baseinfo.ID(), nmi.baseinfo.Name(), omi.baseinfo.Name()))
+			nmi.info.ID(), nmi.info.Name(), omi.info.Name()))
 	}
-	mp.infos[nmi.baseinfo.ID()] = nmi
+	mp.infos[nmi.info.ID()] = nmi
 }
 
 func (mp *Processor) info(id uint32) *msgInfo {
@@ -75,10 +74,13 @@ func (mp *Processor) info(id uint32) *msgInfo {
 }
 
 //wrapRaw 封装已注册消息
-func (mp *Processor) wrapRaw(msg interface{}) (*arpc.RawMsg, error) {
-	bi := mp.helper.BaseInfo(msg)
-	if mi := mp.info(bi.ID()); mi == nil {
-		return nil, fmt.Errorf("%s don't register", bi.Name())
+func (mp *Processor) wrapRaw(msg interface{}, check bool) (*arpc.RawMsg, error) {
+	bi := mp.helper.Extract(msg)
+	if check {
+		mi := mp.info(bi.ID())
+		if mi == nil {
+			return nil, fmt.Errorf("%s don't register", bi.Name())
+		}
 	}
 	raw, err := mp.helper.ToRaw(msg)
 	if err != nil {
@@ -87,11 +89,11 @@ func (mp *Processor) wrapRaw(msg interface{}) (*arpc.RawMsg, error) {
 	return &arpc.RawMsg{Mid: bi.ID(), Raw: raw}, nil
 }
 
-func (mp *Processor) WrapFMNocheck(target uint32, msg interface{}) (*arpc.ForwardMsg, error) {
-	bi := mp.helper.BaseInfo(msg)
-	raw, err := mp.helper.ToRaw(msg)
+//UnregFM 将未注册消息封装为转发消息
+func (mp *Processor) UnregFM(target uint32, msg interface{}) (*arpc.ForwardMsg, error) {
+	raw, err := mp.wrapRaw(msg, false)
 	if err == nil {
-		return &arpc.ForwardMsg{Target: target, Msg: &arpc.RawMsg{Mid: bi.ID(), Raw: raw}}, nil
+		return &arpc.ForwardMsg{Target: target, Msg: raw}, nil
 	}
 	return nil, err
 }
@@ -100,7 +102,7 @@ func (mp *Processor) WrapFMNocheck(target uint32, msg interface{}) (*arpc.Forwar
 // target 转发目标
 //    msg 被转发的消息
 func (mp *Processor) WrapFM(target uint32, msg interface{}) (*arpc.ForwardMsg, error) {
-	raw, err := mp.wrapRaw(msg)
+	raw, err := mp.wrapRaw(msg, true)
 	if err == nil {
 		return &arpc.ForwardMsg{Target: target, Msg: raw}, nil
 	}
@@ -111,7 +113,7 @@ func (mp *Processor) WrapFM(target uint32, msg interface{}) (*arpc.ForwardMsg, e
 //  targets 转发目标切片
 //      msg 被广播的消息
 func (mp *Processor) WrapMM(targets []uint32, msg interface{}) (*arpc.MulticastMsg, error) {
-	raw, err := mp.wrapRaw(msg)
+	raw, err := mp.wrapRaw(msg, true)
 	if err == nil {
 		return &arpc.MulticastMsg{Targets: targets, Msg: raw}, nil
 	}
@@ -127,7 +129,7 @@ func (mp *Processor) Handle(fmsg *arpc.ForwardMsg, from Stream) error {
 	if info == nil {
 		return fmt.Errorf("unregistered message type %d", fmsg.Msg.Mid)
 	}
-	msg, err := mp.helper.FromRaw(info.baseinfo, fmsg.Msg.Raw)
+	msg, err := mp.helper.FromRaw(info.info, fmsg.Msg.Raw)
 	if err != nil {
 		return err
 	}

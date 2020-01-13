@@ -29,6 +29,6 @@ func MsgWrapper(msg interface{}, target uint32) *arpc.ForwardMsg {
 	}
 	return &arpc.ForwardMsg{Target: target,
 		Msg: &arpc.RawMsg{
-			Mid: msgkits.Helper.BaseInfo(msg).ID(),
+			Mid: msgkits.Helper.Extract(msg).ID(),
 			Raw: raw}}
 }

@@ -9,12 +9,9 @@ import (
 	"time"
 )
 
-// InterfaceIsNil 判断接口内容是否是空指针
-func InterfaceIsNil(i interface{}) bool {
-	if i == nil || reflect.ValueOf(i).Kind() == reflect.Ptr && reflect.ValueOf(i).IsNil() {
-		return true
-	}
-	return false
+//IsNil 判断接口内容是否是空指针
+func IsNil(i interface{}) bool {
+	return (i == nil) || (reflect.ValueOf(i).Kind() == reflect.Ptr && reflect.ValueOf(i).IsNil())
 }
 
 // HashFnv1a 简化fvn1a算法调用
@@ -52,12 +49,7 @@ func PublishTCPAddr(addr string) string {
 // ID32GenWithSalt 根据机器mac地址和salt生成32位ID
 //                 当机器和salt不变,ID不变，保证一致性
 func ID32GenWithSalt(salt string) uint32 {
-	ifs, _ := net.Interfaces()
-	hash := HashFnv1a(salt)
-	for _, i := range ifs {
-		hash ^= HashFnv1a(i.HardwareAddr.String())
-	}
-	return hash
+	return HashFnv1a(salt) ^ _machash
 }
 
 var _machash uint32
