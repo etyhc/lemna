@@ -50,7 +50,7 @@ func (mt *MTarget) Forward(pool agent.TargetPool) error {
 		for _, cid := range mmsg.Targets {
 			c := pool.GetTarget(cid)
 			if c != nil {
-				err = agent.T2T(mt, c, &arpc.ForwardMsg{Target: mt.ID(), Msg: mmsg.Msg})
+				err = agent.T2T(mt, c, &arpc.ForwardMsg{Target: mt.ID(), Mid: mmsg.Mid, Raw: mmsg.Raw})
 				//转发失败
 				if err != nil {
 					logger.Error(err)

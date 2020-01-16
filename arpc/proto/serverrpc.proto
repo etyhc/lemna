@@ -18,5 +18,6 @@ service Srpc {
 //服务器广播消息，代理服务器会将此消息从新封装成Forward消息转给客户端
 message MulticastMsg {
   repeated uint32 targets = 1;
-  RawMsg msg = 2;
+  uint32 mid = 2;//消息ID，客户端和服务器协商确定，用于识别消息
+  bytes raw = 3;//序列化后的消息
 }

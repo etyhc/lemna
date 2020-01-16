@@ -23,12 +23,11 @@ var msgkits = MsgKits{Helper: msg.ProtoHelper{}, Builder: proto.Builder{}}
 
 //MsgWrapper 将消息封装成转发消息
 func MsgWrapper(msg interface{}, target uint32) *arpc.ForwardMsg {
-	raw, err := msgkits.Helper.ToRaw(msg)
+	id, raw, err := msgkits.Helper.ToRaw(msg)
 	if err != nil {
 		return nil
 	}
 	return &arpc.ForwardMsg{Target: target,
-		Msg: &arpc.RawMsg{
-			Mid: msgkits.Helper.Extract(msg).ID(),
-			Raw: raw}}
+		Mid: id,
+		Raw: raw}
 }

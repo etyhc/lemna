@@ -2,7 +2,6 @@ package msg
 
 import (
 	"fmt"
-	"lemna/arpc"
 )
 
 // Stream 消息流，用于接收和发送消息
@@ -30,9 +29,11 @@ type Helper interface {
 	//Extract 提取消息基本信息
 	Extract(interface{}) Info
 	//ToRaw 序列化消息
-	ToRaw(interface{}) ([]byte, error)
+	ToRaw(interface{}) (uint32, []byte, error)
 	//FromRaw 反序列化消息
 	FromRaw(Info, []byte) (interface{}, error)
+	Wrap(uint32, interface{}) (ForwardMsg, error)
+	WrapMM([]uint32, interface{}) (MulticastMsg, error)
 }
 
 type msgInfo struct {
@@ -65,74 +66,58 @@ func (mp *Processor) Reg(msg interface{}, handler Handler) {
 	mp.infos[nmi.info.ID()] = nmi
 }
 
-func (mp *Processor) info(id uint32) *msgInfo {
+func (mp *Processor) infoByID(id uint32) (msgInfo, error) {
 	info, ok := mp.infos[id]
-	if !ok {
-		return nil
+	if ok {
+		return info, nil
 	}
-	return &info
+	return info, fmt.Errorf("unregistered msg id=%d", id)
 }
 
-//wrapRaw 封装已注册消息
-func (mp *Processor) wrapRaw(msg interface{}, check bool) (*arpc.RawMsg, error) {
-	bi := mp.helper.Extract(msg)
-	if check {
-		mi := mp.info(bi.ID())
-		if mi == nil {
-			return nil, fmt.Errorf("%s don't register", bi.Name())
-		}
-	}
-	raw, err := mp.helper.ToRaw(msg)
-	if err != nil {
-		return nil, err
-	}
-	return &arpc.RawMsg{Mid: bi.ID(), Raw: raw}, nil
+func (mp *Processor) infoByMsg(msg interface{}) (msgInfo, error) {
+	return mp.infoByID(mp.helper.Extract(msg).ID())
 }
 
 //UnregFM 将未注册消息封装为转发消息
-func (mp *Processor) UnregFM(target uint32, msg interface{}) (*arpc.ForwardMsg, error) {
-	raw, err := mp.wrapRaw(msg, false)
-	if err == nil {
-		return &arpc.ForwardMsg{Target: target, Msg: raw}, nil
-	}
-	return nil, err
+func (mp *Processor) UnregFM(target uint32, msg interface{}) (ForwardMsg, error) {
+	return mp.helper.Wrap(target, msg)
 }
 
 // WrapFM 将已注册消息封装为转发消息
 // target 转发目标
 //    msg 被转发的消息
-func (mp *Processor) WrapFM(target uint32, msg interface{}) (*arpc.ForwardMsg, error) {
-	raw, err := mp.wrapRaw(msg, true)
-	if err == nil {
-		return &arpc.ForwardMsg{Target: target, Msg: raw}, nil
+func (mp *Processor) WrapFM(target uint32, msg interface{}) (ForwardMsg, error) {
+	_, err := mp.infoByMsg(msg)
+	if err != nil {
+		return nil, err
 	}
-	return nil, err
+	return mp.helper.Wrap(target, msg)
 }
 
 // WrapMM 将已注册消息封装为指定目标的多播消息
 //  targets 转发目标切片
 //      msg 被广播的消息
-func (mp *Processor) WrapMM(targets []uint32, msg interface{}) (*arpc.MulticastMsg, error) {
-	raw, err := mp.wrapRaw(msg, true)
-	if err == nil {
-		return &arpc.MulticastMsg{Targets: targets, Msg: raw}, nil
+func (mp *Processor) WrapMM(targets []uint32, msg interface{}) (MulticastMsg, error) {
+	_, err := mp.infoByMsg(msg)
+	if err != nil {
+		return nil, err
 	}
-	return nil, err
+	return mp.helper.WrapMM(targets, msg)
 }
 
 // Handle 处理转发消息函数
 //        转发消息会被解码成原始消息，并调用注册过的处理函数来处理此原始消息
 //   fmsg 收到的转发消息
 //   from 消息流
-func (mp *Processor) Handle(fmsg *arpc.ForwardMsg, from Stream) error {
-	info := mp.info(fmsg.Msg.Mid)
-	if info == nil {
-		return fmt.Errorf("unregistered message type %d", fmsg.Msg.Mid)
-	}
-	msg, err := mp.helper.FromRaw(info.info, fmsg.Msg.Raw)
+func (mp *Processor) Handle(fmsg ForwardMsg, from Stream) error {
+	info, err := mp.infoByID(fmsg.GetMid())
 	if err != nil {
 		return err
 	}
-	info.handler(fmsg.Target, msg, from)
+	msg, err := mp.helper.FromRaw(info.info, fmsg.GetRaw())
+	if err != nil {
+		return err
+	}
+	info.handler(fmsg.GetTarget(), msg, from)
 	return nil
 }

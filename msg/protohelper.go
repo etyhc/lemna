@@ -1,6 +1,7 @@
 package msg
 
 import (
+	"lemna/arpc"
 	"lemna/utils"
 	"reflect"
 
@@ -14,12 +15,12 @@ type ProtoInfo struct {
 	elem reflect.Type
 }
 
-//ID BaseInfo 的Protobuf实现
+//ID Info的Protobuf实现
 func (pi ProtoInfo) ID() uint32 {
 	return pi.id
 }
 
-//Name BaseInfo 的Protobuf实现
+//Name Info的Protobuf实现
 func (pi ProtoInfo) Name() string {
 	return pi.name
 }
@@ -35,8 +36,10 @@ func (ph ProtoHelper) Extract(msg interface{}) Info {
 }
 
 //ToRaw Helper的Protobuf实现
-func (ph ProtoHelper) ToRaw(msg interface{}) ([]byte, error) {
-	return proto.Marshal(msg.(proto.Message))
+func (ph ProtoHelper) ToRaw(msg interface{}) (uint32, []byte, error) {
+	id := ph.Extract(msg).ID()
+	raw, err := proto.Marshal(msg.(proto.Message))
+	return id, raw, err
 }
 
 //FromRaw Helper的Protobuf实现
@@ -44,4 +47,22 @@ func (ph ProtoHelper) FromRaw(info Info, raw []byte) (interface{}, error) {
 	msg := reflect.New(info.(ProtoInfo).elem).Interface()
 	err := proto.Unmarshal(raw, msg.(proto.Message))
 	return msg, err
+}
+
+//Wrap Helper的Protobuf实现
+func (ph ProtoHelper) Wrap(target uint32, msg interface{}) (ForwardMsg, error) {
+	id, rm, err := ph.ToRaw(msg)
+	if err != nil {
+		return nil, err
+	}
+	return &arpc.ForwardMsg{Target: target, Mid: id, Raw: rm}, nil
+}
+
+//WrapMM Helper的Protobuf实现
+func (ph ProtoHelper) WrapMM(targets []uint32, msg interface{}) (MulticastMsg, error) {
+	id, rm, err := ph.ToRaw(msg)
+	if err != nil {
+		return nil, err
+	}
+	return &arpc.MulticastMsg{Targets: targets, Mid: id, Raw: rm}, nil
 }

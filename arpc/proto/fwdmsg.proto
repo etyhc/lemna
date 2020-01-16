@@ -9,5 +9,6 @@ message RawMsg {
 
 message ForwardMsg {
   uint32 target = 1;//转发目标,服务器向客户端转发代表客户端ID，客户端向服务器转发代表服务器类型
-  RawMsg msg = 2;//被转发的消息
+  uint32 mid = 2;//消息ID，客户端和服务器协商确定，用于识别消息
+  bytes raw = 3;//序列化后的消息
 }
