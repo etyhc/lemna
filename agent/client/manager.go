@@ -16,7 +16,7 @@ func newMananger() *manager {
 	return &manager{clients: make(map[uint32]*Target)}
 }
 
-func (cm *manager) newTarget(s arpc.Crpc_ForwardServer, id uint32) (*Target, error) {
+func (cm *manager) newTarget(s arpc.CAgent_ForwardServer, id uint32) (*Target, error) {
 	cm.mu.Lock()
 	defer cm.mu.Unlock()
 	_, ok := cm.clients[id]

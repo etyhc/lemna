@@ -9,14 +9,14 @@ import (
 
 // FTarget rpc代理端(代理服务器作为rpc服务器)
 type FTarget struct {
-	stream arpc.Srpc_ForwardServer //Forward调用接收、发送端
-	_info  Info                    //服务器信息
+	stream arpc.SAgent_ForwardServer //Forward调用接收、发送端
+	_info  Info                      //服务器信息
 }
 
 // NewFTarget 新服务器
 //    client rpc客户端
 //      info 订阅的服务器信息
-func NewFTarget(stream arpc.Srpc_ForwardServer, info Info) *FTarget {
+func NewFTarget(stream arpc.SAgent_ForwardServer, info Info) *FTarget {
 	return &FTarget{stream: stream, _info: info}
 }
 

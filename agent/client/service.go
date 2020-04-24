@@ -70,9 +70,15 @@ func getUID(ctx context.Context, token Token) (uint32, error) {
 	return token.GetUID(session[0])
 }
 
+// Call rpc.ClientServer.Call接口实现
+func (cs *Service) Call(context.Context, *arpc.RawMsg) (*arpc.RawMsg, error) {
+	//TODO 还未实现,处理来自客户端的Call
+	return nil, nil
+}
+
 // Forward rpc.ClientServer.Forward接口实现
 //         会验证消息头的session数据是否有效
-func (cs *Service) Forward(stream arpc.Crpc_ForwardServer) error {
+func (cs *Service) Forward(stream arpc.CAgent_ForwardServer) error {
 	uid, err := getUID(stream.Context(), cs.token)
 	if err != nil {
 		return err
@@ -88,19 +94,6 @@ func (cs *Service) Forward(stream arpc.Crpc_ForwardServer) error {
 	return err
 }
 
-// Other rpc.ClientServer.Other接口实现
-//       会验证消息头的session数据是否有效
-func (cs *Service) Other(stream arpc.Crpc_OtherServer) error {
-	uid, err := getUID(stream.Context(), cs.token)
-	if err != nil {
-		return err
-	}
-	//TODO
-	//根据uid得到用户
-	_ = cs.clientmgr.getTarget(uid)
-	return nil
-}
-
 // Run 运行代理服务,接受客户端的连接
 func (cs *Service) Run(sp agent.TargetPool) error {
 	cs.sp = sp
@@ -109,7 +102,7 @@ func (cs *Service) Run(sp agent.TargetPool) error {
 		return err
 	}
 	s := grpc.NewServer()
-	arpc.RegisterCrpcServer(s, cs)
+	arpc.RegisterCAgentServer(s, cs)
 	logger.Infof("Start client service at %s", cs.addr)
 	return s.Serve(lis)
 }

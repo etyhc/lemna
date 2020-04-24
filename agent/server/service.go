@@ -74,7 +74,7 @@ func getInfo(ctx context.Context) (Info, error) {
 }
 
 // Forward arpc.ArpcServer.Forward接口实现
-func (s *Service) Forward(stream arpc.Srpc_ForwardServer) error {
+func (s *Service) Forward(stream arpc.SAgent_ForwardServer) error {
 	info, err := getInfo(stream.Context())
 	if err != nil {
 		return err
@@ -86,7 +86,7 @@ func (s *Service) Forward(stream arpc.Srpc_ForwardServer) error {
 }
 
 // Multicast arpc.ArpcServer.Multicast接口实现
-func (s *Service) Multicast(stream arpc.Srpc_MulticastServer) error {
+func (s *Service) Multicast(stream arpc.SAgent_MulticastServer) error {
 	info, err := getInfo(stream.Context())
 	if err != nil {
 		return err
@@ -94,10 +94,10 @@ func (s *Service) Multicast(stream arpc.Srpc_MulticastServer) error {
 	return NewMTarget(stream, info).Forward(s.ctp)
 }
 
-// Other arpc.ArpcServer.Other接口实现
-func (s *Service) Other(stream arpc.Srpc_OtherServer) error {
-	//TODO 待实现
-	return nil
+// Call rpc.ArpcServer.Call接口实现
+func (s *Service) Call(context.Context, *arpc.RawMsg) (*arpc.RawMsg, error) {
+	//TODO 还未实现,处理来自客户端的Call
+	return nil, nil
 }
 
 // Run 运行代理服务,接受服务器的连接
@@ -108,7 +108,7 @@ func (s *Service) Run(ctp agent.TargetPool) error {
 		return err
 	}
 	gs := grpc.NewServer()
-	arpc.RegisterSrpcServer(gs, s)
+	arpc.RegisterSAgentServer(gs, s)
 	logger.Infof("Start server service at %s", s.addr)
 	return gs.Serve(lis)
 }

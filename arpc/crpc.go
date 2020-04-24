@@ -1,9 +1,8 @@
-//Package client 基于arpc的封装实现
-package client
+//Package arpc 基于arpc的client rpc封装实现
+package arpc
 
 import (
 	"context"
-	"lemna/arpc"
 	"time"
 
 	"google.golang.org/grpc"
@@ -15,12 +14,11 @@ type Crpc struct {
 	Token string //登录代理服务器所需的Token
 	Addr  string //代理服务器地址
 
-	stream  arpc.Crpc_ForwardClient
-	ostream arpc.Crpc_OtherClient
-	conn    *grpc.ClientConn
-	client  arpc.CrpcClient
-	ctx     context.Context
-	header  metadata.MD
+	stream CAgent_ForwardClient
+	conn   *grpc.ClientConn
+	client CAgentClient
+	ctx    context.Context
+	header metadata.MD
 }
 
 //GetRequestMetadata 实现credentials.PerRPCCredentials接口
@@ -36,23 +34,18 @@ func (crpc *Crpc) RequireTransportSecurity() bool {
 }
 
 //Send 发送转发消息给服务器
-func (crpc *Crpc) Send(msg *arpc.ForwardMsg) error {
+func (crpc *Crpc) Send(msg *ForwardMsg) error {
 	return crpc.stream.Send(msg)
 }
 
 //Recv 接收服务器转发消息
-func (crpc *Crpc) Recv() (*arpc.ForwardMsg, error) {
+func (crpc *Crpc) Recv() (*ForwardMsg, error) {
 	return crpc.stream.Recv()
 }
 
-//AgentSend 发送消息给代理
-func (crpc *Crpc) AgentSend(msg *arpc.RawMsg) error {
-	return crpc.ostream.Send(msg)
-}
-
-//AgentRecv 接收代理消息
-func (crpc *Crpc) AgentRecv() (*arpc.RawMsg, error) {
-	return crpc.ostream.Recv()
+//Call 发送消息给代理
+func (crpc *Crpc) Call(msg *RawMsg) (*RawMsg, error) {
+	return crpc.client.Call(crpc.ctx, msg)
 }
 
 //Close 关闭rpc
@@ -73,15 +66,12 @@ func (crpc *Crpc) Login() error {
 		return err
 	}
 	//rpc客户端
-	crpc.client = arpc.NewCrpcClient(crpc.conn)
+	crpc.client = NewCAgentClient(crpc.conn)
 	crpc.ctx = context.Background()
 	//登录rpc调用
-	_, err = crpc.client.Login(crpc.ctx, &arpc.LoginMsg{Token: crpc.Token}, grpc.Header(&crpc.header))
+	_, err = crpc.client.Login(crpc.ctx, &LoginMsg{Token: crpc.Token}, grpc.Header(&crpc.header))
 	if err == nil {
 		crpc.stream, err = crpc.client.Forward(metadata.NewOutgoingContext(crpc.ctx, crpc.header))
-		if err == nil {
-			crpc.ostream, err = crpc.client.Other(metadata.NewOutgoingContext(crpc.ctx, crpc.header))
-		}
 	}
 	if err != nil {
 		crpc.conn.Close()

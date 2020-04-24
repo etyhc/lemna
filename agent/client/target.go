@@ -9,15 +9,15 @@ import (
 
 // Target 客户端rpc调用服务
 type Target struct {
-	stream arpc.Crpc_ForwardServer //网络流
-	uid    uint32                  //客户端id
-	cache  map[uint32]agent.Target //转发目标缓存
+	stream arpc.CAgent_ForwardServer //网络流
+	uid    uint32                    //客户端id
+	cache  map[uint32]agent.Target   //转发目标缓存
 }
 
 // NewTarget 新客户端
 //         s 客户端网络流
 //        id 客户端uid，客户端唯一
-func newTarget(s arpc.Crpc_ForwardServer, id uint32) *Target {
+func newTarget(s arpc.CAgent_ForwardServer, id uint32) *Target {
 	return &Target{stream: s, uid: id, cache: make(map[uint32]agent.Target)}
 }
 
