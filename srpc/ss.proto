@@ -1,0 +1,17 @@
+syntax = "proto3";
+
+package srpc;
+
+//代理服务器与服务器交互rpc及消息定义
+//=====================
+
+service StoS {
+  //服务器发送、接收客户端的消息
+  rpc Call (CallMsg) returns (CallMsg) {}
+}
+
+//服务器广播消息，代理服务器会将此消息从新封装成Forward消息转给客户端
+message CallMsg {
+  uint32 mid = 1;
+  bytes raw = 2;//序列化后的消息
+}

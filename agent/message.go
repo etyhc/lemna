@@ -3,7 +3,7 @@ package agent
 import (
 	"lemna/agent/proto"
 	"lemna/arpc"
-	"lemna/msg"
+	"lemna/arpc/msg"
 )
 
 //MsgBuilder 代理服务器消息构建接口,需要根据不同协议实现
